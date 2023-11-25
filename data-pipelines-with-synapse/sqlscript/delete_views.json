@@ -1,8 +1,8 @@
 {
-	"name": "create_dwh_schemas",
+	"name": "delete_views",
 	"properties": {
 		"folder": {
-			"name": "create_ddls"
+			"name": "delete_ddls"
 		},
 		"content": {
 			"query": "",

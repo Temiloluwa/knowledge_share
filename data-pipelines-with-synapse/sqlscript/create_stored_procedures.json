@@ -1,5 +1,5 @@
 {
-	"name": "create_dwh_schemas",
+	"name": "create_stored_procedures",
 	"properties": {
 		"folder": {
 			"name": "create_ddls"

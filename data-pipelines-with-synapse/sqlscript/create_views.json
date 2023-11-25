@@ -1,5 +1,5 @@
 {
-	"name": "create_dwh_schemas",
+	"name": "create_views",
 	"properties": {
 		"folder": {
 			"name": "create_ddls"
