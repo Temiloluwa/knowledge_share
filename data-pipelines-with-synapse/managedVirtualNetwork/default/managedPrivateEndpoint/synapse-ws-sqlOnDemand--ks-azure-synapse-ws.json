@@ -1,0 +1,10 @@
+{
+	"name": "synapse-ws-sqlOnDemand--ks-azure-synapse-ws",
+	"properties": {
+		"privateLinkResourceId": "/subscriptions/10589681-5ffc-4c04-bc50-3f3b976aaea9/resourceGroups/temmie-rg/providers/Microsoft.Synapse/workspaces/ks-azure-synapse-ws",
+		"groupId": "sqlOnDemand",
+		"fqdns": [
+			"ks-azure-synapse-ws-ondemand.9fd29c97-3cfe-470c-992a-8b7a64096224.sql.azuresynapse.net"
+		]
+	}
+}

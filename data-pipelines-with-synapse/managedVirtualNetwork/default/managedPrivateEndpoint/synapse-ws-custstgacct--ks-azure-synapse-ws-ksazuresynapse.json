@@ -1,0 +1,7 @@
+{
+	"name": "synapse-ws-custstgacct--ks-azure-synapse-ws-ksazuresynapse",
+	"properties": {
+		"privateLinkResourceId": "/subscriptions/10589681-5ffc-4c04-bc50-3f3b976aaea9/resourceGroups/temmie-rg/providers/Microsoft.Storage/storageAccounts/ksazuresynapse",
+		"groupId": "dfs"
+	}
+}
