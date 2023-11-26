@@ -5,13 +5,13 @@
 			"name": "delete_ddls"
 		},
 		"content": {
-			"query": "",
+			"query": "DROP VIEW [dwh_reporting].[AverageRevenuePerDeveloper]\nGO\nDROP VIEW [dwh_reporting].[TotalCommitsByDeveloper]\nGO\nDROP VIEW [dwh_reporting].[TotalStoryPointsByProject]\nGO\n\n",
 			"metadata": {
 				"language": "sql"
 			},
 			"currentConnection": {
-				"databaseName": "master",
-				"poolName": "Built-in"
+				"databaseName": "kssqlpool23",
+				"poolName": "kssqlpool23"
 			},
 			"resultLimit": 5000
 		},
