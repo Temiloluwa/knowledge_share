@@ -16,7 +16,7 @@
 				"userProperties": [],
 				"typeProperties": {
 					"notebook": {
-						"referenceName": "ProcessJiraGitData",
+						"referenceName": "ProcessJiraGitDataParametrized",
 						"type": "NotebookReference"
 					},
 					"parameters": {
