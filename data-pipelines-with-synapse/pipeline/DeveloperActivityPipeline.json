@@ -129,7 +129,7 @@
 					"type": "SqlPoolReference"
 				},
 				"typeProperties": {
-					"storedProcedureName": "[dwh].[load_core_tables]"
+					"storedProcedureName": "[dwh].[load_core_jira_git]"
 				}
 			}
 		],
