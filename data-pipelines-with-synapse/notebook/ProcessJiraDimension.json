@@ -18,7 +18,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "bc8dba96-9d0f-483f-9e8b-05449de8969e"
+				"spark.autotune.trackingId": "1771dd3c-aca6-4d53-91f0-b9f2e031bdd1"
 			}
 		},
 		"metadata": {
@@ -49,6 +49,21 @@
 			"sessionKeepAliveTimeout": 30
 		},
 		"cells": [
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"ParSourceFolderName = \"\"\n",
+					"ParSourceFileName = \"\"\n",
+					"ParDestFolderName = \""
+				]
+			},
 			{
 				"cell_type": "code",
 				"source": [
