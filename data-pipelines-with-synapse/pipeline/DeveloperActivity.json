@@ -1,6 +1,42 @@
 {
 	"name": "DeveloperActivity",
 	"properties": {
+		"activities": [
+			{
+				"name": "Transfrom JiraGit Data",
+				"type": "SynapseNotebook",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"snapshot": true
+				}
+			}
+		],
+		"parameters": {
+			"ParSourceFolderName": {
+				"type": "string",
+				"defaultValue": "bronze/jira_git_dim"
+			},
+			"ParSourceFileName": {
+				"type": "string",
+				"defaultValue": "jira_git_commit.csv"
+			},
+			"ParDestFolderName": {
+				"type": "string",
+				"defaultValue": "gold/jira_git_dim"
+			},
+			"ParDestFileName": {
+				"type": "string",
+				"defaultValue": "jira_git_dimension.parquet"
+			}
+		},
 		"annotations": []
 	}
 }
