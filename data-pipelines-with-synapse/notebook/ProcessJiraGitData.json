@@ -18,7 +18,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "997142f5-2ee4-45fc-862e-2b897c82afd2"
+				"spark.autotune.trackingId": "228a6d97-2256-4e8d-a774-d67ebaf5850e"
 			}
 		},
 		"metadata": {
@@ -51,46 +51,6 @@
 		"cells": [
 			{
 				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"tags": [
-						"parameters"
-					]
-				},
-				"source": [
-					"ParSourceFolderName = \"\"\n",
-					"ParSourceFileName = \"\"\n",
-					"ParDestFolderName = \"\"\n",
-					"ParDestFileName = \"\""
-				],
-				"execution_count": null
-			},
-			{
-				"cell_type": "markdown",
-				"metadata": {
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"ParSourceFolderName = \"bronze/jira_git_dim\"\n",
-					"ParSourceFileName = \"jira_git_commit.csv\"\n",
-					"ParDestFolderName = \"gold/jira_git_dim\"\n",
-					"ParDestFileName = \"jira_git_dimension.parquet\""
-				]
-			},
-			{
-				"cell_type": "code",
 				"source": [
 					"import pandas as pd\n",
 					"from datetime import datetime"
@@ -109,6 +69,27 @@
 				"source": [
 					"# Create Path Variables"
 				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"ParSourceFolderName = \"bronze/jira_git_dim\"\n",
+					"ParSourceFileName = \"jira_git_commit.csv\"\n",
+					"ParDestFolderName = \"gold/jira_git_dim\"\n",
+					"ParDestFileName = \"jira_git_dimension.parquet\""
+				],
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
