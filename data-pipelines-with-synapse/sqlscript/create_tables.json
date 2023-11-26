@@ -5,7 +5,7 @@
 			"name": "create_ddls"
 		},
 		"content": {
-			"query": "",
+			"query": "CREATE TABLE dwh_core.project_dimension (\n    [ProjectKey] INT PRIMARY KEY,\n    [ProjectName] NVARCHAR(255),\n    [ProjectStart] DATE,\n    [ProjectEnd] DATE,\n    [RevenueGenerated] INT\n);\n\n\nCREATE TABLE dwh_core.developer_dimension (\n    [DeveloperKey] INT PRIMARY KEY,\n    [DeveloperName] NVARCHAR(255),\n    [DeveloperRole] NVARCHAR(255)\n);\n\n\n",
 			"metadata": {
 				"language": "sql"
 			},
