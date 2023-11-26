@@ -5,13 +5,13 @@
 			"name": "create_ddls"
 		},
 		"content": {
-			"query": "CREATE TABLE dwh_core.project_dimension (\n    [ProjectKey] INT PRIMARY KEY,\n    [ProjectName] NVARCHAR(255),\n    [ProjectStart] DATE,\n    [ProjectEnd] DATE,\n    [RevenueGenerated] INT\n);\nGO\n\n\nCREATE TABLE dwh_core.developer_dimension (\n    [DeveloperKey] INT PRIMARY KEY,\n    [DeveloperName] NVARCHAR(255),\n    [DeveloperRole] NVARCHAR(255)\n);\nGO\n\n\nCREATE TABLE dwh_core.jira_git_fact (\n    [JiraGitKey] INT,\n    [JiraTicketKey] INT,\n    [DeveloperKey] INT,\n    [StoryPoint] INT,\n    [GitHubRepo] NVARCHAR(255),\n    [CommitMessage] NVARCHAR(1000),\n    [CommitTime] DATETIME,\n    [ProjectName] NVARCHAR(255)\n);\nGO\n\n\nCREATE TABLE dwh_staging.jira_git_fact (\n    [JiraGitKey] INT,\n    [JiraTicketKey] INT,\n    [DeveloperKey] INT,\n    [StoryPoint] INT,\n    [GitHubRepo] NVARCHAR(255),\n    [CommitMessage] NVARCHAR(1000),\n    [CommitTime] NVARCHAR(255),\n    [ProjectName] NVARCHAR(255)\n);\nGO\n\n\n\n\n\n\n\n",
+			"query": "CREATE TABLE dwh_core.project_dimension (\n    [ProjectKey] INT,\n    [ProjectName] NVARCHAR(255),\n    [ProjectStart] DATE,\n    [ProjectEnd] DATE,\n    [RevenueGenerated] INT\n);\nGO\n\n\nCREATE TABLE dwh_core.developer_dimension (\n    [DeveloperKey] INT,\n    [DeveloperName] NVARCHAR(255),\n    [DeveloperRole] NVARCHAR(255)\n);\nGO\n\n\nCREATE TABLE dwh_core.jira_git_fact (\n    [JiraGitKey] INT,\n    [JiraTicketKey] INT,\n    [DeveloperKey] INT,\n    [StoryPoint] INT,\n    [GitHubRepo] NVARCHAR(255),\n    [CommitMessage] NVARCHAR(1000),\n    [CommitTime] DATETIME,\n    [ProjectName] NVARCHAR(255)\n);\nGO\n\n\nCREATE TABLE dwh_staging.jira_git_fact (\n    [JiraGitKey] INT,\n    [JiraTicketKey] INT,\n    [DeveloperKey] INT,\n    [StoryPoint] INT,\n    [GitHubRepo] NVARCHAR(255),\n    [CommitMessage] NVARCHAR(1000),\n    [CommitTime] NVARCHAR(255),\n    [ProjectName] NVARCHAR(255)\n);\nGO\n\n\n\n\n\n\n\n",
 			"metadata": {
 				"language": "sql"
 			},
 			"currentConnection": {
-				"databaseName": "master",
-				"poolName": "Built-in"
+				"databaseName": "kssqlpool23",
+				"poolName": "kssqlpool23"
 			},
 			"resultLimit": 5000
 		},
