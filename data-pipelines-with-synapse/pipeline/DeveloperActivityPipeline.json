@@ -1,6 +1,60 @@
 {
 	"name": "DeveloperActivityPipeline",
 	"properties": {
+		"activities": [
+			{
+				"name": "ProcessJiraGitData",
+				"type": "SynapseNotebook",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": "ProcessJiraGitData",
+						"type": "NotebookReference"
+					},
+					"parameters": {
+						"ParSourceFolderName": {
+							"value": "",
+							"type": "string"
+						},
+						"ParSourceFileName": {
+							"value": "",
+							"type": "string"
+						},
+						"ParDestFolderName": {
+							"value": "",
+							"type": "string"
+						},
+						"ParDestFileName": {
+							"value": "",
+							"type": "string"
+						}
+					},
+					"snapshot": true
+				}
+			}
+		],
+		"parameters": {
+			"ParSourceFolderName": {
+				"type": "string"
+			},
+			"ParSourceFileName": {
+				"type": "string"
+			},
+			"ParDestFolderName": {
+				"type": "string"
+			},
+			"ParDestFileName": {
+				"type": "string"
+			}
+		},
 		"annotations": []
 	}
 }
