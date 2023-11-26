@@ -5,7 +5,7 @@
 			"name": "delete_ddls"
 		},
 		"content": {
-			"query": "",
+			"query": "DROP PROCEDURE [dwh].[empty_staging_tables]\nGO\nDROP PROCEDURE [dwh].[load_core_developer]\nGO\nDROP PROCEDURE [dwh].[load_core_jira_git]\nGO\nDROP PROCEDURE [dwh].[load_core_project]\nGO\n",
 			"metadata": {
 				"language": "sql"
 			},
