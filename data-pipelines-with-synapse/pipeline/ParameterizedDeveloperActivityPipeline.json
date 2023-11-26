@@ -1,5 +1,5 @@
 {
-	"name": "DeveloperActivityPipeline_Parameterized",
+	"name": "ParameterizedDeveloperActivityPipeline",
 	"properties": {
 		"activities": [
 			{
@@ -16,7 +16,7 @@
 				"userProperties": [],
 				"typeProperties": {
 					"notebook": {
-						"referenceName": "ProcessJiraGitDataParametrized",
+						"referenceName": "ParametrizedProcessJiraGitData",
 						"type": "NotebookReference"
 					},
 					"parameters": {
