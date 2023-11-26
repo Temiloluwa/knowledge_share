@@ -18,7 +18,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "53913e17-0962-4d06-951f-64e048de0391"
+				"spark.autotune.trackingId": "8b97caae-822b-4d18-a79a-db6bcbcb55bc"
 			}
 		},
 		"metadata": {
@@ -169,10 +169,18 @@
 					}
 				},
 				"source": [
+					"def process_timestamp(row):\n",
+					"    datetime_object = datetime.strptime(row, \"%Y-%m-%d %H:%M:%S.%f\")\n",
+					"    return datetime_object.strftime(\"%Y-%m-%dT%H:%M:%SZ\")\n",
+					"\n",
 					"# Make JiraGitKey Unique\n",
 					"source_dataframe.drop(columns=[\"JiraGitKey\"], inplace=True)\n",
 					"source_dataframe = source_dataframe.reset_index()\n",
-					"source_dataframe = source_dataframe.rename(columns={\"index\": \"JiraGitKey\"})"
+					"source_dataframe = source_dataframe.rename(columns={\"index\": \"JiraGitKey\"})\n",
+					"\n",
+					"# Process Commit Time\n",
+					"source_dataframe.CommitTime = source_dataframe.CommitTime.apply(process_timestamp)\n",
+					"source_dataframe.head()"
 				],
 				"execution_count": 35
 			},
@@ -222,7 +230,7 @@
 				},
 				"source": [
 					"destination_path = create_abfss_uri(destination_folder_name, destination_file_name)\n",
-					"source_dataframe.to_parquet(destination_path, index=False)\n",
+					"source_dataframe.to_parquet(destination_path, index=False, compression=\"snappy\")\n",
 					"print(f\"Saved data @ {destination_path}\")"
 				],
 				"execution_count": 37
