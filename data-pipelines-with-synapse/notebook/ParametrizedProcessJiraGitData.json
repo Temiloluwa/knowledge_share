@@ -1,5 +1,5 @@
 {
-	"name": "ProcessJiraGitDataParametrized",
+	"name": "ParametrizedProcessJiraGitData",
 	"properties": {
 		"description": "Notebook to process Jira dimension table",
 		"nbformat": 4,
@@ -18,7 +18,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "cb9bdaa5-2382-4a66-ab98-e01e434927f6"
+				"spark.autotune.trackingId": "53913e17-0962-4d06-951f-64e048de0391"
 			}
 		},
 		"metadata": {
