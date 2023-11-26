@@ -9,9 +9,12 @@
 		"type": "Parquet",
 		"typeProperties": {
 			"location": {
-				"type": "AzureBlobFSLocation"
+				"type": "AzureBlobFSLocation",
+				"fileName": "jira_git_dimension.parquet",
+				"folderPath": "gold/jira_git_fact",
+				"fileSystem": "mydatalake"
 			},
-			"compressionCodec": "snappy"
+			"compressionCodec": "none"
 		},
 		"schema": []
 	}
