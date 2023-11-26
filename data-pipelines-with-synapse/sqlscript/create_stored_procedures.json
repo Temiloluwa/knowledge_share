@@ -5,13 +5,13 @@
 			"name": "create_ddls"
 		},
 		"content": {
-			"query": "CREATE PROCEDURE dwh.empty_staging_tables\nAS BEGIN\n    DELETE FROM dwh_staging.jira_git_fact;\nEND\n\n\n\nCREATE PROCEDURE dwh.load_core_tables\nAS\nBEGIN\n    SET NOCOUNT ON;\n\n    -- Insert data into core table from staging table\n    INSERT INTO dwh_core.jira_git_fact (\n        [JiraGitKey],\n        [JiraTicketKey],\n        [DeveloperKey],\n        [StoryPoint],\n        [GitHubRepo],\n        [CommitMessage],\n        [CommitTime],\n        [ProjectName]\n    )\n    SELECT\n        [JiraGitKey],\n        [JiraTicketKey],\n        [DeveloperKey],\n        [StoryPoint],\n        [GitHubRepo],\n        [CommitMessage],\n        CAST([CommitTime] AS DATETIME), -- Cast the date column to datetime\n        [ProjectName]\n    FROM\n        dwh_staging.jira_git_fact;\nEND;\n",
+			"query": "CREATE PROCEDURE dwh.empty_staging_tables\nAS BEGIN\n    DELETE FROM dwh_staging.jira_git_fact;\nEND\nGO\n\nCREATE PROCEDURE dwh.load_core_tables\nAS\nBEGIN\n    SET NOCOUNT ON;\n\n    -- Insert data into core table from staging table\n    INSERT INTO dwh_core.jira_git_fact (\n        [JiraGitKey],\n        [JiraTicketKey],\n        [DeveloperKey],\n        [StoryPoint],\n        [GitHubRepo],\n        [CommitMessage],\n        [CommitTime],\n        [ProjectName]\n    )\n    SELECT\n        [JiraGitKey],\n        [JiraTicketKey],\n        [DeveloperKey],\n        [StoryPoint],\n        [GitHubRepo],\n        [CommitMessage],\n        CAST([CommitTime] AS DATETIME), -- Cast the date column to datetime\n        [ProjectName]\n    FROM\n        dwh_staging.jira_git_fact;\nEND;\nGO\n",
 			"metadata": {
 				"language": "sql"
 			},
 			"currentConnection": {
-				"databaseName": "master",
-				"poolName": "Built-in"
+				"databaseName": "kssqlpool23",
+				"poolName": "kssqlpool23"
 			},
 			"resultLimit": 5000
 		},
