@@ -1,0 +1,152 @@
+{
+	"name": "DeveloperActivityPipeline_Parameterized",
+	"properties": {
+		"activities": [
+			{
+				"name": "ProcessJiraGitData",
+				"type": "SynapseNotebook",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": "ProcessJiraGitData",
+						"type": "NotebookReference"
+					},
+					"parameters": {
+						"ParSourceFolderName": {
+							"value": {
+								"value": "@pipeline().parameters.ParSourceFolderName",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"ParSourceFileName": {
+							"value": {
+								"value": "@pipeline().parameters.ParSourceFileName",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"ParDestFolderName": {
+							"value": {
+								"value": "@pipeline().parameters.ParDestFolderName",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"ParDestFileName": {
+							"value": {
+								"value": "@pipeline().parameters.ParDestFileName",
+								"type": "Expression"
+							},
+							"type": "string"
+						}
+					},
+					"snapshot": true,
+					"sparkPool": {
+						"referenceName": {
+							"value": "@pipeline().parameters.ParSparkPoolName",
+							"type": "Expression"
+						},
+						"type": "BigDataPoolReference"
+					},
+					"executorSize": "Small",
+					"driverSize": "Small"
+				}
+			},
+			{
+				"name": "EmptyStagingTables",
+				"type": "SqlPoolStoredProcedure",
+				"dependsOn": [
+					{
+						"activity": "ProcessJiraGitData",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": []
+			},
+			{
+				"name": "LoadCoreTables",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [
+					{
+						"activity": "LoadStagingTableFromParquet",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": []
+			},
+			{
+				"name": "LoadStagingTableFromParquet",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "EmptyStagingTables",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"enableStaging": false
+				}
+			}
+		],
+		"parameters": {
+			"ParSourceFolderName": {
+				"type": "string",
+				"defaultValue": "bronze/jira_git_fact"
+			},
+			"ParSourceFileName": {
+				"type": "string",
+				"defaultValue": "jira_git_commit.csv"
+			},
+			"ParDestFolderName": {
+				"type": "string",
+				"defaultValue": "gold/jira_git_fact"
+			},
+			"ParDestFileName": {
+				"type": "string",
+				"defaultValue": "jira_git_dimension.parquet"
+			},
+			"ParSparkPoolName": {
+				"type": "string",
+				"defaultValue": "kssparkpool"
+			}
+		},
+		"annotations": []
+	}
+}
