@@ -41,7 +41,7 @@
 				},
 				"inputs": [
 					{
-						"referenceName": "RawCSV",
+						"referenceName": "StagingCSV",
 						"type": "DatasetReference",
 						"parameters": {
 							"CsvContainer": "mydatalake",
@@ -58,7 +58,7 @@
 				],
 				"outputs": [
 					{
-						"referenceName": "RawCSVStagingDB",
+						"referenceName": "StagingDB",
 						"type": "DatasetReference",
 						"parameters": {
 							"DbSchema": "dwh_staging",

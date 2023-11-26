@@ -1,5 +1,5 @@
 {
-	"name": "RawCSVStagingDB",
+	"name": "StagingDB",
 	"properties": {
 		"parameters": {
 			"DbSchema": {

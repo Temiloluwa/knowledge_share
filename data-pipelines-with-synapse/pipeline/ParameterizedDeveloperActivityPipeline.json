@@ -79,27 +79,17 @@
 					"secureOutput": false,
 					"secureInput": false
 				},
-				"userProperties": []
-			},
-			{
-				"name": "LoadCoreTables",
-				"type": "SqlServerStoredProcedure",
-				"dependsOn": [
-					{
-						"activity": "LoadStagingTableFromParquet",
-						"dependencyConditions": [
-							"Succeeded"
-						]
-					}
-				],
-				"policy": {
-					"timeout": "0.12:00:00",
-					"retry": 0,
-					"retryIntervalInSeconds": 30,
-					"secureOutput": false,
-					"secureInput": false
+				"userProperties": [],
+				"sqlPool": {
+					"referenceName": "kssqlpool23",
+					"type": "SqlPoolReference"
 				},
-				"userProperties": []
+				"typeProperties": {
+					"storedProcedureName": {
+						"value": "@pipeline().parameters.ParStagingStoredProcedure",
+						"type": "Expression"
+					}
+				}
 			},
 			{
 				"name": "LoadStagingTableFromParquet",
@@ -121,7 +111,54 @@
 				},
 				"userProperties": [],
 				"typeProperties": {
+					"source": {
+						"type": "ParquetSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "ParquetReadSettings"
+						}
+					},
 					"enableStaging": false
+				},
+				"inputs": [
+					{
+						"referenceName": "StagingParquet",
+						"type": "DatasetReference"
+					}
+				]
+			},
+			{
+				"name": "LoadCoreTable",
+				"type": "SqlPoolStoredProcedure",
+				"dependsOn": [
+					{
+						"activity": "LoadStagingTableFromParquet",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"sqlPool": {
+					"referenceName": "kssqlpool23",
+					"type": "SqlPoolReference"
+				},
+				"typeProperties": {
+					"storedProcedureName": {
+						"value": "@pipeline().parameters.ParCoreStoredProcedure",
+						"type": "Expression"
+					}
 				}
 			}
 		],
@@ -145,6 +182,14 @@
 			"ParSparkPoolName": {
 				"type": "string",
 				"defaultValue": "kssparkpool"
+			},
+			"ParStagingStoredProcedure": {
+				"type": "string",
+				"defaultValue": "dwh.empty_staging_tables"
+			},
+			"ParCoreStoredProcedure": {
+				"type": "string",
+				"defaultValue": "dwh.load_core_jira_git"
 			}
 		},
 		"annotations": []

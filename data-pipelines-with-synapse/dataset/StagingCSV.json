@@ -1,5 +1,5 @@
 {
-	"name": "RawCSV",
+	"name": "StagingCSV",
 	"properties": {
 		"linkedServiceName": {
 			"referenceName": "ks-azure-synapse-ws-WorkspaceDefaultStorage",

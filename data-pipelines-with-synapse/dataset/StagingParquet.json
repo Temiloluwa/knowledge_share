@@ -1,0 +1,41 @@
+{
+	"name": "StagingParquet",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ks-azure-synapse-ws-WorkspaceDefaultStorage",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"ParquetContainer": {
+				"type": "string"
+			},
+			"ParquetFolder": {
+				"type": "string"
+			},
+			"ParquetFileName": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "Parquet",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": {
+					"value": "@dataset().ParquetFileName",
+					"type": "Expression"
+				},
+				"folderPath": {
+					"value": "@dataset().ParquetFolder",
+					"type": "Expression"
+				},
+				"fileSystem": {
+					"value": "@dataset().ParquetContainer",
+					"type": "Expression"
+				}
+			},
+			"compressionCodec": "snappy"
+		},
+		"schema": []
+	}
+}
