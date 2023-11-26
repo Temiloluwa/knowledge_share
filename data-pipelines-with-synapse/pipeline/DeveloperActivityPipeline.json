@@ -19,42 +19,9 @@
 						"referenceName": "ProcessJiraGitData",
 						"type": "NotebookReference"
 					},
-					"parameters": {
-						"ParSourceFolderName": {
-							"value": {
-								"value": "@pipeline().parameters.ParSourceFolderName",
-								"type": "Expression"
-							},
-							"type": "string"
-						},
-						"ParSourceFileName": {
-							"value": {
-								"value": "@pipeline().parameters.ParSourceFileName",
-								"type": "Expression"
-							},
-							"type": "string"
-						},
-						"ParDestFolderName": {
-							"value": {
-								"value": "@pipeline().parameters.ParDestFolderName",
-								"type": "Expression"
-							},
-							"type": "string"
-						},
-						"ParDestFileName": {
-							"value": {
-								"value": "@pipeline().parameters.ParDestFileName",
-								"type": "Expression"
-							},
-							"type": "string"
-						}
-					},
 					"snapshot": true,
 					"sparkPool": {
-						"referenceName": {
-							"value": "@pipeline().parameters.ParSparkPoolName",
-							"type": "Expression"
-						},
+						"referenceName": "kssparkpool",
 						"type": "BigDataPoolReference"
 					},
 					"executorSize": "Small",
@@ -125,28 +92,6 @@
 				}
 			}
 		],
-		"parameters": {
-			"ParSourceFolderName": {
-				"type": "string",
-				"defaultValue": "bronze/jira_git_fact"
-			},
-			"ParSourceFileName": {
-				"type": "string",
-				"defaultValue": "jira_git_commit.csv"
-			},
-			"ParDestFolderName": {
-				"type": "string",
-				"defaultValue": "gold/jira_git_fact"
-			},
-			"ParDestFileName": {
-				"type": "string",
-				"defaultValue": "jira_git_dimension.parquet"
-			},
-			"ParSparkPoolName": {
-				"type": "string",
-				"defaultValue": "kssparkpool"
-			}
-		},
 		"annotations": []
 	}
 }
