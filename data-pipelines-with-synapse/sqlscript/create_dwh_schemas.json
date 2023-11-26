@@ -5,7 +5,7 @@
 			"name": "create_ddls"
 		},
 		"content": {
-			"query": "CREATE SCHEMA dwh;\nCREATE SCHEMA dwh_core;\nCREATE SCHEMA dwh_staging;\nCREATE SCHEMA dwh_reporting;\n",
+			"query": "CREATE SCHEMA dwh;\nGO\nCREATE SCHEMA dwh_core;\nGO\nCREATE SCHEMA dwh_staging;\nGO\nCREATE SCHEMA dwh_reporting;\nGO",
 			"metadata": {
 				"language": "sql"
 			},
