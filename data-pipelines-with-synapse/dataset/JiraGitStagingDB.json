@@ -1,0 +1,53 @@
+{
+	"name": "JiraGitStagingDB",
+	"properties": {
+		"annotations": [],
+		"type": "SqlPoolTable",
+		"schema": [
+			{
+				"name": "JiraGitKey",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "JiraTicketKey",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "DeveloperKey",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "StoryPoint",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "GitHubRepo",
+				"type": "nvarchar"
+			},
+			{
+				"name": "CommitMessage",
+				"type": "nvarchar"
+			},
+			{
+				"name": "CommitTime",
+				"type": "nvarchar"
+			},
+			{
+				"name": "ProjectName",
+				"type": "nvarchar"
+			}
+		],
+		"typeProperties": {
+			"schema": "dwh_staging",
+			"table": "jira_git_fact"
+		},
+		"sqlPool": {
+			"referenceName": "kssqlpool23",
+			"type": "SqlPoolReference"
+		}
+	}
+}

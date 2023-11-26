@@ -46,27 +46,14 @@
 					"secureOutput": false,
 					"secureInput": false
 				},
-				"userProperties": []
-			},
-			{
-				"name": "LoadCoreTables",
-				"type": "SqlServerStoredProcedure",
-				"dependsOn": [
-					{
-						"activity": "LoadStagingTableFromParquet",
-						"dependencyConditions": [
-							"Succeeded"
-						]
-					}
-				],
-				"policy": {
-					"timeout": "0.12:00:00",
-					"retry": 0,
-					"retryIntervalInSeconds": 30,
-					"secureOutput": false,
-					"secureInput": false
+				"userProperties": [],
+				"sqlPool": {
+					"referenceName": "kssqlpool23",
+					"type": "SqlPoolReference"
 				},
-				"userProperties": []
+				"typeProperties": {
+					"storedProcedureName": "dwh.empty_staging_tables"
+				}
 			},
 			{
 				"name": "LoadStagingTableFromParquet",
@@ -88,7 +75,61 @@
 				},
 				"userProperties": [],
 				"typeProperties": {
+					"source": {
+						"type": "ParquetSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"fileListPath": "mydatalake/gold/jira_git_fact/jira_git_dimension.parquet",
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "ParquetReadSettings"
+						}
+					},
+					"sink": {
+						"type": "SqlPoolSink",
+						"allowCopyCommand": true
+					},
 					"enableStaging": false
+				},
+				"inputs": [
+					{
+						"referenceName": "JiraGitStaging",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "JiraGitStagingDB",
+						"type": "DatasetReference"
+					}
+				]
+			},
+			{
+				"name": "LoadCoreFactTable",
+				"type": "SqlPoolStoredProcedure",
+				"dependsOn": [
+					{
+						"activity": "LoadStagingTableFromParquet",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"sqlPool": {
+					"referenceName": "kssqlpool23",
+					"type": "SqlPoolReference"
+				},
+				"typeProperties": {
+					"storedProcedureName": "[dwh].[load_core_tables]"
 				}
 			}
 		],
