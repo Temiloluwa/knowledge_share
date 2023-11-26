@@ -18,7 +18,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "94c15e75-4367-40e1-86db-718059f6b561"
+				"spark.autotune.trackingId": "1960342f-8587-4fa6-8805-b2a714fd0d94"
 			}
 		},
 		"metadata": {
@@ -74,6 +74,22 @@
 				"execution_count": null
 			},
 			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"ParSourceFolderName = \"bronze/jira_git_dim\"\n",
+					"ParSourceFileName = \"jira_git_commit.csv\"\n",
+					"ParDestFolderName = \"gold/jira_git_dim\"\n",
+					"ParDestFileName = \"jira_git_dimension.parquet\""
+				]
+			},
+			{
 				"cell_type": "code",
 				"source": [
 					"import pandas as pd\n",
@@ -112,13 +128,13 @@
 					"    return f\"abfss://{container_name}@{storage_account_name}.dfs.core.windows.net/{folder_name}/{file_name}\"\n",
 					"\n",
 					"\n",
-					"source_folder_name = \"bronze/jira_git_dim\"\n",
-					"source_file_name = \"jira_git_commit.csv\"\n",
 					"\n",
-					"destination_folder_name = \"gold/jira_git_dim\"\n",
-					"destination_file_name = \"jira_git_dimension.parquet\""
+					"source_folder_name = f\"{ParSourceFolderName}\"\n",
+					"source_file_name = f\"{ParSourceFileName}\"\n",
+					"destination_folder_name = f\"{ParDestFolderName}\"\n",
+					"destination_file_name = f\"{ParDestFileName}\""
 				],
-				"execution_count": 33
+				"execution_count": 1
 			},
 			{
 				"cell_type": "markdown",
