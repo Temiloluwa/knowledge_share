@@ -5,7 +5,14 @@
 			{
 				"name": "LoadCSV",
 				"type": "Copy",
-				"dependsOn": [],
+				"dependsOn": [
+					{
+						"activity": "EmptyStagingTable",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
 				"policy": {
 					"timeout": "0.12:00:00",
 					"retry": 0,
@@ -35,17 +42,112 @@
 				"inputs": [
 					{
 						"referenceName": "RawCSV",
-						"type": "DatasetReference"
+						"type": "DatasetReference",
+						"parameters": {
+							"CsvContainer": "mydatalake",
+							"CsvFolder": {
+								"value": "@pipeline().parameters.CsvFolder",
+								"type": "Expression"
+							},
+							"CsvFileName": {
+								"value": "@pipeline().parameters.CsvFileName",
+								"type": "Expression"
+							}
+						}
 					}
 				],
 				"outputs": [
 					{
 						"referenceName": "RawCSVStagingDB",
-						"type": "DatasetReference"
+						"type": "DatasetReference",
+						"parameters": {
+							"DbSchema": "dwh_staging",
+							"DbTable": {
+								"value": "@pipeline().parameters.StagingTableName",
+								"type": "Expression"
+							}
+						}
 					}
 				]
+			},
+			{
+				"name": "LoadCoreTable",
+				"description": "Adds Data Transformation and Loads Table",
+				"type": "SqlPoolStoredProcedure",
+				"dependsOn": [
+					{
+						"activity": "LoadCSV",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"sqlPool": {
+					"referenceName": "kssqlpool23",
+					"type": "SqlPoolReference"
+				},
+				"typeProperties": {
+					"storedProcedureName": {
+						"value": "@pipeline().parameters.CoreStoredProcedure",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "EmptyStagingTable",
+				"description": "Empties Staging Tables",
+				"type": "SqlPoolStoredProcedure",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"sqlPool": {
+					"referenceName": "kssqlpool23",
+					"type": "SqlPoolReference"
+				},
+				"typeProperties": {
+					"storedProcedureName": {
+						"value": "@pipeline().parameters.StagingStoredProcedure",
+						"type": "Expression"
+					}
+				}
 			}
 		],
+		"parameters": {
+			"CsvFolder": {
+				"type": "string",
+				"defaultValue": "bronze/developer_dim"
+			},
+			"CsvFileName": {
+				"type": "string",
+				"defaultValue": "developer_dimension.csv"
+			},
+			"StagingStoredProcedure": {
+				"type": "string",
+				"defaultValue": "dwh.empty_staging_tables"
+			},
+			"CoreStoredProcedure": {
+				"type": "string",
+				"defaultValue": "dwh.load_core_developer"
+			},
+			"StagingTableName": {
+				"type": "string",
+				"defaultValue": "developer_dimension"
+			}
+		},
 		"annotations": []
 	}
 }
