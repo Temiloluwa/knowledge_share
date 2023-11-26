@@ -18,7 +18,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "3551437d-41a8-4375-a60b-06dd79ba29db"
+				"spark.autotune.trackingId": "01777a79-2ab4-44f5-8573-b52ee3304bc1"
 			}
 		},
 		"metadata": {
@@ -54,7 +54,7 @@
 				"source": [
 					"import pandas as pd"
 				],
-				"execution_count": 1
+				"execution_count": 2
 			},
 			{
 				"cell_type": "markdown",
@@ -96,7 +96,7 @@
 					"\n",
 					""
 				],
-				"execution_count": null
+				"execution_count": 3
 			},
 			{
 				"cell_type": "markdown",
@@ -125,7 +125,26 @@
 					}
 				},
 				"source": [
-					"source_path = create_abfss_uri(source_folder_namer_name, source_file_name)"
+					"source_path = create_abfss_uri(source_folder_name, source_file_name)\n",
+					"pd.read_csv(source_path)"
+				],
+				"execution_count": 5
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					""
 				],
 				"execution_count": null
 			}
