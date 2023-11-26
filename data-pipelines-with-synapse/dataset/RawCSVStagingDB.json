@@ -1,9 +1,27 @@
 {
 	"name": "RawCSVStagingDB",
 	"properties": {
+		"parameters": {
+			"DbSchema": {
+				"type": "string"
+			},
+			"DbTable": {
+				"type": "string"
+			}
+		},
 		"annotations": [],
 		"type": "SqlPoolTable",
 		"schema": [],
+		"typeProperties": {
+			"schema": {
+				"value": "@dataset().DbSchema",
+				"type": "Expression"
+			},
+			"table": {
+				"value": "@dataset().DbTable",
+				"type": "Expression"
+			}
+		},
 		"sqlPool": {
 			"referenceName": "kssqlpool23",
 			"type": "SqlPoolReference"

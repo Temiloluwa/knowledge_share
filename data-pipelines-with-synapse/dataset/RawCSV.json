@@ -5,11 +5,34 @@
 			"referenceName": "ks-azure-synapse-ws-WorkspaceDefaultStorage",
 			"type": "LinkedServiceReference"
 		},
+		"parameters": {
+			"CsvContainer": {
+				"type": "string"
+			},
+			"CsvFolder": {
+				"type": "string"
+			},
+			"CsvFileName": {
+				"type": "string"
+			}
+		},
 		"annotations": [],
 		"type": "DelimitedText",
 		"typeProperties": {
 			"location": {
-				"type": "AzureBlobFSLocation"
+				"type": "AzureBlobFSLocation",
+				"fileName": {
+					"value": "@dataset().CsvFileName",
+					"type": "Expression"
+				},
+				"folderPath": {
+					"value": "@dataset().CsvFolder",
+					"type": "Expression"
+				},
+				"fileSystem": {
+					"value": "@dataset().CsvContainer",
+					"type": "Expression"
+				}
 			},
 			"columnDelimiter": ",",
 			"escapeChar": "\\",
