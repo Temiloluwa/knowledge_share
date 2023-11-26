@@ -18,7 +18,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "27354509-0234-4639-9512-f8a62c18f12d"
+				"spark.autotune.trackingId": "2e7eb929-738a-42ef-acff-1edc9add1c3a"
 			}
 		},
 		"metadata": {
@@ -55,7 +55,7 @@
 					"import pandas as pd\n",
 					"from datetime import datetime"
 				],
-				"execution_count": 32
+				"execution_count": 10
 			},
 			{
 				"cell_type": "markdown",
@@ -89,7 +89,7 @@
 					"ParDestFolderName = \"gold/jira_git_fact\"\n",
 					"ParDestFileName = \"jira_git_dimension.parquet\""
 				],
-				"execution_count": null
+				"execution_count": 11
 			},
 			{
 				"cell_type": "code",
@@ -115,7 +115,7 @@
 					"destination_folder_name = f\"{ParDestFolderName}\"\n",
 					"destination_file_name = f\"{ParDestFileName}\""
 				],
-				"execution_count": 1
+				"execution_count": 12
 			},
 			{
 				"cell_type": "markdown",
@@ -150,7 +150,7 @@
 					"print(f\"Loaded data @ {source_path}\")\n",
 					"source_dataframe.head()"
 				],
-				"execution_count": 34
+				"execution_count": 13
 			},
 			{
 				"cell_type": "code",
@@ -166,12 +166,20 @@
 					}
 				},
 				"source": [
+					"def process_timestamp(row):\n",
+					"    datetime_object = datetime.strptime(row, \"%Y-%m-%d %H:%M:%S.%f\")\n",
+					"    return datetime_object.strftime(\"%Y-%m-%dT%H:%M:%SZ\")\n",
+					"\n",
 					"# Make JiraGitKey Unique\n",
 					"source_dataframe.drop(columns=[\"JiraGitKey\"], inplace=True)\n",
 					"source_dataframe = source_dataframe.reset_index()\n",
-					"source_dataframe = source_dataframe.rename(columns={\"index\": \"JiraGitKey\"})"
+					"source_dataframe = source_dataframe.rename(columns={\"index\": \"JiraGitKey\"})\n",
+					"\n",
+					"# Process Commit Time\n",
+					"source_dataframe.CommitTime = source_dataframe.CommitTime.apply(process_timestamp)\n",
+					"source_dataframe.head()"
 				],
-				"execution_count": 35
+				"execution_count": 14
 			},
 			{
 				"cell_type": "code",
@@ -189,7 +197,7 @@
 				"source": [
 					"source_dataframe.info()"
 				],
-				"execution_count": 36
+				"execution_count": 15
 			},
 			{
 				"cell_type": "markdown",
@@ -219,10 +227,10 @@
 				},
 				"source": [
 					"destination_path = create_abfss_uri(destination_folder_name, destination_file_name)\n",
-					"source_dataframe.to_parquet(destination_path, index=False)\n",
+					"source_dataframe.to_parquet(destination_path, index=False, compression=\"snappy\")\n",
 					"print(f\"Saved data @ {destination_path}\")"
 				],
-				"execution_count": 37
+				"execution_count": 16
 			}
 		]
 	}
