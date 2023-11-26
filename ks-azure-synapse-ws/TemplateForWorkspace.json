@@ -1,0 +1,1661 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"workspaceName": {
+			"type": "string",
+			"metadata": "Workspace name",
+			"defaultValue": "ks-azure-synapse-ws"
+		},
+		"ks-azure-synapse-ws-WorkspaceDefaultSqlServer_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'ks-azure-synapse-ws-WorkspaceDefaultSqlServer'",
+			"defaultValue": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=tcp:ks-azure-synapse-ws.sql.azuresynapse.net,1433;Initial Catalog=@{linkedService().DBName}"
+		},
+		"ks-azure-synapse-ws-WorkspaceDefaultStorage_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://ksazuresynapse.dfs.core.windows.net"
+		}
+	},
+	"variables": {
+		"workspaceId": "[concat('Microsoft.Synapse/workspaces/', parameters('workspaceName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('workspaceName'), '/kssqlpool23')]",
+			"type": "Microsoft.Synapse/workspaces/sqlPools",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": []
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/DeveloperActivityPipeline')]",
+			"type": "Microsoft.Synapse/workspaces/pipelines",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"activities": [
+					{
+						"name": "ProcessJiraGitData",
+						"type": "SynapseNotebook",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebook": {
+								"referenceName": "ProcessJiraGitData",
+								"type": "NotebookReference"
+							},
+							"snapshot": true,
+							"sparkPool": {
+								"referenceName": "kssparkpool",
+								"type": "BigDataPoolReference"
+							},
+							"executorSize": "Small",
+							"conf": {
+								"spark.dynamicAllocation.enabled": null,
+								"spark.dynamicAllocation.minExecutors": null,
+								"spark.dynamicAllocation.maxExecutors": null
+							},
+							"driverSize": "Small",
+							"numExecutors": null
+						}
+					},
+					{
+						"name": "EmptyStagingTables",
+						"type": "SqlPoolStoredProcedure",
+						"dependsOn": [
+							{
+								"activity": "ProcessJiraGitData",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"sqlPool": {
+							"referenceName": "kssqlpool23",
+							"type": "SqlPoolReference"
+						},
+						"typeProperties": {
+							"storedProcedureName": "dwh.empty_staging_tables"
+						}
+					},
+					{
+						"name": "LoadStagingTableFromParquet",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "EmptyStagingTables",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "ParquetSource",
+								"storeSettings": {
+									"type": "AzureBlobFSReadSettings",
+									"recursive": true,
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "ParquetReadSettings"
+								}
+							},
+							"sink": {
+								"type": "SqlPoolSink",
+								"allowCopyCommand": true,
+								"copyCommandSettings": {}
+							},
+							"enableStaging": false
+						},
+						"inputs": [
+							{
+								"referenceName": "JiraGitStaging",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "JiraGitStagingDB",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						]
+					},
+					{
+						"name": "LoadCoreFactTable",
+						"type": "SqlPoolStoredProcedure",
+						"dependsOn": [
+							{
+								"activity": "LoadStagingTableFromParquet",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"sqlPool": {
+							"referenceName": "kssqlpool23",
+							"type": "SqlPoolReference"
+						},
+						"typeProperties": {
+							"storedProcedureName": "[dwh].[load_core_jira_git]"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/notebooks/ProcessJiraGitData')]",
+				"[concat(variables('workspaceId'), '/bigDataPools/kssparkpool')]",
+				"[concat(variables('workspaceId'), '/sqlPools/kssqlpool23')]",
+				"[concat(variables('workspaceId'), '/datasets/JiraGitStaging')]",
+				"[concat(variables('workspaceId'), '/datasets/JiraGitStagingDB')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/LoadCSVToDWH')]",
+			"type": "Microsoft.Synapse/workspaces/pipelines",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"activities": [
+					{
+						"name": "LoadCSV",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "EmptyStagingTable",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "DelimitedTextSource",
+								"storeSettings": {
+									"type": "AzureBlobFSReadSettings",
+									"recursive": true,
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "DelimitedTextReadSettings"
+								}
+							},
+							"sink": {
+								"type": "SqlPoolSink",
+								"allowCopyCommand": true,
+								"copyCommandSettings": {}
+							},
+							"enableStaging": false
+						},
+						"inputs": [
+							{
+								"referenceName": "StagingCSV",
+								"type": "DatasetReference",
+								"parameters": {
+									"CsvContainer": "mydatalake",
+									"CsvFolder": {
+										"value": "@pipeline().parameters.CsvFolder",
+										"type": "Expression"
+									},
+									"CsvFileName": {
+										"value": "@pipeline().parameters.CsvFileName",
+										"type": "Expression"
+									}
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "StagingDB",
+								"type": "DatasetReference",
+								"parameters": {
+									"DbSchema": "dwh_staging",
+									"DbTable": {
+										"value": "@pipeline().parameters.StagingTableName",
+										"type": "Expression"
+									}
+								}
+							}
+						]
+					},
+					{
+						"name": "LoadCoreTable",
+						"description": "Adds Data Transformation and Loads Table",
+						"type": "SqlPoolStoredProcedure",
+						"dependsOn": [
+							{
+								"activity": "LoadCSV",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"sqlPool": {
+							"referenceName": "kssqlpool23",
+							"type": "SqlPoolReference"
+						},
+						"typeProperties": {
+							"storedProcedureName": {
+								"value": "@pipeline().parameters.CoreStoredProcedure",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "EmptyStagingTable",
+						"description": "Empties Staging Tables",
+						"type": "SqlPoolStoredProcedure",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"sqlPool": {
+							"referenceName": "kssqlpool23",
+							"type": "SqlPoolReference"
+						},
+						"typeProperties": {
+							"storedProcedureName": {
+								"value": "@pipeline().parameters.StagingStoredProcedure",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"CsvFolder": {
+						"type": "string",
+						"defaultValue": "bronze/project_dim"
+					},
+					"CsvFileName": {
+						"type": "string",
+						"defaultValue": "project_dimension.csv"
+					},
+					"StagingStoredProcedure": {
+						"type": "string",
+						"defaultValue": "dwh.empty_staging_tables"
+					},
+					"CoreStoredProcedure": {
+						"type": "string",
+						"defaultValue": "dwh.load_core_project"
+					},
+					"StagingTableName": {
+						"type": "string",
+						"defaultValue": "project_dimension"
+					}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/datasets/StagingCSV')]",
+				"[concat(variables('workspaceId'), '/datasets/StagingDB')]",
+				"[concat(variables('workspaceId'), '/sqlPools/kssqlpool23')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/ParameterizedDeveloperActivityPipeline')]",
+			"type": "Microsoft.Synapse/workspaces/pipelines",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"activities": [
+					{
+						"name": "ProcessJiraGitData",
+						"type": "SynapseNotebook",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebook": {
+								"referenceName": "ParametrizedProcessJiraGitData",
+								"type": "NotebookReference"
+							},
+							"parameters": {
+								"ParSourceFolderName": {
+									"value": {
+										"value": "@pipeline().parameters.ParSourceFolderName",
+										"type": "Expression"
+									},
+									"type": "string"
+								},
+								"ParSourceFileName": {
+									"value": {
+										"value": "@pipeline().parameters.ParSourceFileName",
+										"type": "Expression"
+									},
+									"type": "string"
+								},
+								"ParDestFolderName": {
+									"value": {
+										"value": "@pipeline().parameters.ParDestFolderName",
+										"type": "Expression"
+									},
+									"type": "string"
+								},
+								"ParDestFileName": {
+									"value": {
+										"value": "@pipeline().parameters.ParDestFileName",
+										"type": "Expression"
+									},
+									"type": "string"
+								}
+							},
+							"snapshot": true,
+							"sparkPool": {
+								"referenceName": {
+									"value": "@pipeline().parameters.ParSparkPoolName",
+									"type": "Expression"
+								},
+								"type": "BigDataPoolReference"
+							},
+							"executorSize": "Small",
+							"conf": {
+								"spark.dynamicAllocation.enabled": null,
+								"spark.dynamicAllocation.minExecutors": null,
+								"spark.dynamicAllocation.maxExecutors": null
+							},
+							"driverSize": "Small",
+							"numExecutors": null
+						}
+					},
+					{
+						"name": "EmptyStagingTables",
+						"type": "SqlPoolStoredProcedure",
+						"dependsOn": [
+							{
+								"activity": "ProcessJiraGitData",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"sqlPool": {
+							"referenceName": "kssqlpool23",
+							"type": "SqlPoolReference"
+						},
+						"typeProperties": {
+							"storedProcedureName": {
+								"value": "@pipeline().parameters.ParStagingStoredProcedure",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "LoadStagingTableFromParquet",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "EmptyStagingTables",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "ParquetSource",
+								"storeSettings": {
+									"type": "AzureBlobFSReadSettings",
+									"recursive": true,
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "ParquetReadSettings"
+								}
+							},
+							"sink": {
+								"type": "SqlPoolSink",
+								"allowCopyCommand": true,
+								"copyCommandSettings": {}
+							},
+							"enableStaging": false
+						},
+						"inputs": [
+							{
+								"referenceName": "StagingParquet",
+								"type": "DatasetReference",
+								"parameters": {
+									"ParquetContainer": "mydatalake",
+									"ParquetFolder": {
+										"value": "@pipeline().parameters.ParDestFolderName",
+										"type": "Expression"
+									},
+									"ParquetFileName": {
+										"value": "@pipeline().parameters.ParDestFileName",
+										"type": "Expression"
+									}
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "StagingDB",
+								"type": "DatasetReference",
+								"parameters": {
+									"DbSchema": "dwh_staging",
+									"DbTable": {
+										"value": "@pipeline().parameters.ParStagingTableName",
+										"type": "Expression"
+									}
+								}
+							}
+						]
+					},
+					{
+						"name": "LoadCoreTable",
+						"type": "SqlPoolStoredProcedure",
+						"dependsOn": [
+							{
+								"activity": "LoadStagingTableFromParquet",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"sqlPool": {
+							"referenceName": "kssqlpool23",
+							"type": "SqlPoolReference"
+						},
+						"typeProperties": {
+							"storedProcedureName": {
+								"value": "@pipeline().parameters.ParCoreStoredProcedure",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"ParSourceFolderName": {
+						"type": "string",
+						"defaultValue": "bronze/jira_git_fact"
+					},
+					"ParSourceFileName": {
+						"type": "string",
+						"defaultValue": "jira_git_commit.csv"
+					},
+					"ParDestFolderName": {
+						"type": "string",
+						"defaultValue": "gold/jira_git_fact"
+					},
+					"ParDestFileName": {
+						"type": "string",
+						"defaultValue": "jira_git_dimension.parquet"
+					},
+					"ParSparkPoolName": {
+						"type": "string",
+						"defaultValue": "kssparkpool"
+					},
+					"ParStagingStoredProcedure": {
+						"type": "string",
+						"defaultValue": "dwh.empty_staging_tables"
+					},
+					"ParCoreStoredProcedure": {
+						"type": "string",
+						"defaultValue": "dwh.load_core_jira_git"
+					},
+					"ParStagingTableName": {
+						"type": "string",
+						"defaultValue": "jira_git_fact"
+					}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/notebooks/ParametrizedProcessJiraGitData')]",
+				"[concat(variables('workspaceId'), '/sqlPools/kssqlpool23')]",
+				"[concat(variables('workspaceId'), '/datasets/StagingParquet')]",
+				"[concat(variables('workspaceId'), '/datasets/StagingDB')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/JiraGitStaging')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ks-azure-synapse-ws-WorkspaceDefaultStorage",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "Parquet",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": "jira_git_dimension.parquet",
+						"folderPath": "gold/jira_git_fact",
+						"fileSystem": "mydatalake"
+					},
+					"compressionCodec": "snappy"
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/ks-azure-synapse-ws-WorkspaceDefaultStorage')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/JiraGitStagingDB')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"type": "SqlPoolTable",
+				"schema": [
+					{
+						"name": "JiraGitKey",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "JiraTicketKey",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "DeveloperKey",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "StoryPoint",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "GitHubRepo",
+						"type": "nvarchar"
+					},
+					{
+						"name": "CommitMessage",
+						"type": "nvarchar"
+					},
+					{
+						"name": "CommitTime",
+						"type": "nvarchar"
+					},
+					{
+						"name": "ProjectName",
+						"type": "nvarchar"
+					}
+				],
+				"typeProperties": {
+					"schema": "dwh_staging",
+					"table": "jira_git_fact"
+				},
+				"sqlPool": {
+					"referenceName": "kssqlpool23",
+					"type": "SqlPoolReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/sqlPools/kssqlpool23')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/StagingCSV')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ks-azure-synapse-ws-WorkspaceDefaultStorage",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"CsvContainer": {
+						"type": "string"
+					},
+					"CsvFolder": {
+						"type": "string"
+					},
+					"CsvFileName": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": {
+							"value": "@dataset().CsvFileName",
+							"type": "Expression"
+						},
+						"folderPath": {
+							"value": "@dataset().CsvFolder",
+							"type": "Expression"
+						},
+						"fileSystem": {
+							"value": "@dataset().CsvContainer",
+							"type": "Expression"
+						}
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\"",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "DeveloperKey",
+						"type": "String"
+					},
+					{
+						"name": "DeveloperName",
+						"type": "String"
+					},
+					{
+						"name": "DeveloperRole",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/ks-azure-synapse-ws-WorkspaceDefaultStorage')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/StagingDB')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"parameters": {
+					"DbSchema": {
+						"type": "string"
+					},
+					"DbTable": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "SqlPoolTable",
+				"schema": [],
+				"typeProperties": {
+					"schema": {
+						"value": "@dataset().DbSchema",
+						"type": "Expression"
+					},
+					"table": {
+						"value": "@dataset().DbTable",
+						"type": "Expression"
+					}
+				},
+				"sqlPool": {
+					"referenceName": "kssqlpool23",
+					"type": "SqlPoolReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/sqlPools/kssqlpool23')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/StagingParquet')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ks-azure-synapse-ws-WorkspaceDefaultStorage",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"ParquetContainer": {
+						"type": "string"
+					},
+					"ParquetFolder": {
+						"type": "string"
+					},
+					"ParquetFileName": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "Parquet",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": {
+							"value": "@dataset().ParquetFileName",
+							"type": "Expression"
+						},
+						"folderPath": {
+							"value": "@dataset().ParquetFolder",
+							"type": "Expression"
+						},
+						"fileSystem": {
+							"value": "@dataset().ParquetContainer",
+							"type": "Expression"
+						}
+					},
+					"compressionCodec": "snappy"
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/ks-azure-synapse-ws-WorkspaceDefaultStorage')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/ks-azure-synapse-ws-WorkspaceDefaultSqlServer')]",
+			"type": "Microsoft.Synapse/workspaces/linkedServices",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"parameters": {
+					"DBName": {
+						"type": "String"
+					}
+				},
+				"annotations": [],
+				"type": "AzureSqlDW",
+				"typeProperties": {
+					"connectionString": "[parameters('ks-azure-synapse-ws-WorkspaceDefaultSqlServer_connectionString')]"
+				},
+				"connectVia": {
+					"referenceName": "AutoResolveIntegrationRuntime",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/ks-azure-synapse-ws-WorkspaceDefaultStorage')]",
+			"type": "Microsoft.Synapse/workspaces/linkedServices",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobFS",
+				"typeProperties": {
+					"url": "[parameters('ks-azure-synapse-ws-WorkspaceDefaultStorage_properties_typeProperties_url')]"
+				},
+				"connectVia": {
+					"referenceName": "AutoResolveIntegrationRuntime",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/AutoResolveIntegrationRuntime')]",
+			"type": "Microsoft.Synapse/workspaces/integrationRuntimes",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"type": "Managed",
+				"typeProperties": {
+					"computeProperties": {
+						"location": "AutoResolve",
+						"dataFlowProperties": {
+							"computeType": "General",
+							"coreCount": 8,
+							"timeToLive": 0
+						}
+					}
+				},
+				"managedVirtualNetwork": {
+					"type": "ManagedVirtualNetworkReference",
+					"referenceName": "default"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/managedVirtualNetworks/default')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/WorkspaceSystemIdentity')]",
+			"type": "Microsoft.Synapse/workspaces/credentials",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"type": "ManagedIdentity",
+				"typeProperties": {}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/create_dwh_schemas')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "create_ddls"
+				},
+				"content": {
+					"query": "CREATE SCHEMA dwh;\nGO\nCREATE SCHEMA dwh_core;\nGO\nCREATE SCHEMA dwh_staging;\nGO\nCREATE SCHEMA dwh_reporting;\nGO",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "kssqlpool23",
+						"poolName": "kssqlpool23"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/create_stored_procedures')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "create_ddls"
+				},
+				"content": {
+					"query": "CREATE PROCEDURE dwh.empty_staging_tables\nAS BEGIN\n    DELETE FROM dwh_staging.jira_git_fact;\n    DELETE FROM dwh_staging.developer_dimension;\n    DELETE FROM dwh_staging.project_dimension;\nEND\nGO\n\n-- LOAD CORE DEVELOPER \n\nCREATE PROCEDURE dwh.load_core_developer\nAS\nBEGIN\n    SET NOCOUNT ON;\n    INSERT INTO dwh_core.developer_dimension (\n        [DeveloperKey],\n        [DeveloperName],\n        [DeveloperRole]\n    )\n    SELECT\n        [DeveloperKey],\n        [DeveloperName],\n        [DeveloperRole]\n    FROM\n        dwh_staging.developer_dimension;\nEND;\nGO\n\n-- LOAD DWH CORE PROJECT\nCREATE PROCEDURE dwh.load_core_project\nAS\nBEGIN\n    SET NOCOUNT ON;\n\n    INSERT INTO dwh_core.project_dimension (\n        [ProjectKey],\n        [ProjectName],\n        [ProjectStart],\n        [ProjectEnd],\n        [RevenueGenerated]\n    )\n    SELECT\n        [ProjectKey],\n        [ProjectName],\n        CAST([ProjectStart] AS DATETIME) AS [ProjectStart], \n        CAST([ProjectEnd] AS DATETIME) AS [ProjectEnd],    \n        [RevenueGenerated]\n    FROM\n        dwh_staging.project_dimension;\nEND;\nGO\n\n-- LOAD DWH JIRA GIT FACT\nCREATE PROCEDURE dwh.load_core_jira_git\nAS\nBEGIN\n    SET NOCOUNT ON;\n\n    -- Insert data into core table from staging table\n    INSERT INTO dwh_core.jira_git_fact (\n        [JiraGitKey],\n        [JiraTicketKey],\n        [DeveloperKey],\n        [StoryPoint],\n        [GitHubRepo],\n        [CommitMessage],\n        [CommitTime],\n        [ProjectName]\n    )\n    SELECT\n        [JiraGitKey],\n        [JiraTicketKey],\n        [DeveloperKey],\n        [StoryPoint],\n        [GitHubRepo],\n        [CommitMessage],\n        CAST([CommitTime] AS DATETIME), -- Cast the date column to datetime\n        [ProjectName]\n    FROM\n        dwh_staging.jira_git_fact;\nEND;\nGO\n",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "kssqlpool23",
+						"poolName": "kssqlpool23"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/create_tables')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "create_ddls"
+				},
+				"content": {
+					"query": "CREATE TABLE dwh_core.project_dimension (\n    [ProjectKey] INT,\n    [ProjectName] NVARCHAR(255),\n    [ProjectStart] DATETIME,\n    [ProjectEnd] DATETIME,\n    [RevenueGenerated] INT\n);\nGO\n\n-- CREATE TABLE dwh_staging.project_dimension\n\nCREATE TABLE dwh_staging.project_dimension (\n    [ProjectKey] INT,\n    [ProjectName] NVARCHAR(255),\n    [ProjectStart] NVARCHAR(255),\n    [ProjectEnd] NVARCHAR(255),\n    [RevenueGenerated] INT\n);\nGO\n\n-- CREATE TABLE dwh_core.developer_dimension\n\nCREATE TABLE dwh_core.developer_dimension (\n    [DeveloperKey] INT,\n    [DeveloperName] NVARCHAR(255),\n    [DeveloperRole] NVARCHAR(255)\n);\nGO\n\n-- CREATE TABLE dwh_staging.developer_dimension\n\nCREATE TABLE dwh_staging.developer_dimension (\n    [DeveloperKey] INT,\n    [DeveloperName] NVARCHAR(255),\n    [DeveloperRole] NVARCHAR(255)\n);\nGO\n\n-- CREATE TABLE dwh_core.jira_git_fact\n\nCREATE TABLE dwh_core.jira_git_fact (\n    [JiraGitKey] INT,\n    [JiraTicketKey] NVARCHAR(100),\n    [DeveloperKey] INT,\n    [StoryPoint] INT,\n    [GitHubRepo] NVARCHAR(255),\n    [CommitMessage] NVARCHAR(1000),\n    [CommitTime] DATETIME,\n    [ProjectName] NVARCHAR(255)\n);\nGO\n\n-- CREATE TABLE dwh_staging.jira_git_fact\n\nCREATE TABLE dwh_staging.jira_git_fact (\n    [JiraGitKey] INT,\n    [JiraTicketKey] NVARCHAR(100),\n    [DeveloperKey] INT,\n    [StoryPoint] INT,\n    [GitHubRepo] NVARCHAR(255),\n    [CommitMessage] NVARCHAR(1000),\n    [CommitTime] NVARCHAR(255),\n    [ProjectName] NVARCHAR(255)\n);\nGO\n",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "kssqlpool23",
+						"poolName": "kssqlpool23"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/create_views')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "create_ddls"
+				},
+				"content": {
+					"query": "-- NUMBER OF STORY POINTS PER RPOJECT\n\nCREATE VIEW dwh_reporting.TotalStoryPointsByProject AS\nSELECT\n    pd.ProjectName,\n    SUM(jgf.StoryPoint) AS TotalStoryPoints\nFROM\n    dwh_core.jira_git_fact jgf\nJOIN\n    dwh_core.project_dimension pd ON jgf.ProjectName = pd.ProjectName\nGROUP BY\n    pd.ProjectName;\n\nGO\n\n-- AVERAGE REVENUE PER DEVELOPER\n\nCREATE VIEW dwh_reporting.AverageRevenuePerDeveloper AS\nSELECT\n    dd.DeveloperName,\n    AVG(pd.RevenueGenerated) AS AverageRevenue\nFROM\n    dwh_core.jira_git_fact jgf\nJOIN\n    dwh_core.developer_dimension dd ON jgf.DeveloperKey = dd.DeveloperKey\nJOIN\n    dwh_core.project_dimension pd ON jgf.ProjectName = pd.ProjectName\nGROUP BY\n    dd.DeveloperName;\n\nGO\n\n-- TOTAL COMMITS BY DEVELOPER\n\nCREATE VIEW dwh_reporting.TotalCommitsByDeveloper AS\nSELECT\n    dd.DeveloperName,\n    COUNT(jgf.JiraGitKey) AS TotalCommits\nFROM\n    dwh_core.jira_git_fact jgf\nJOIN\n    dwh_core.developer_dimension dd ON jgf.DeveloperKey = dd.DeveloperKey\nGROUP BY\n    dd.DeveloperName;\n\nGO",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "kssqlpool23",
+						"poolName": "kssqlpool23"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/delete_stored_procedures')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "delete_ddls"
+				},
+				"content": {
+					"query": "DROP PROCEDURE [dwh].[empty_staging_tables]\nGO\nDROP PROCEDURE [dwh].[load_core_developer]\nGO\nDROP PROCEDURE [dwh].[load_core_jira_git]\nGO\nDROP PROCEDURE [dwh].[load_core_project]\nGO\n",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "kssqlpool23",
+						"poolName": "kssqlpool23"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/delete_tables')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "delete_ddls"
+				},
+				"content": {
+					"query": "DROP TABLE [dwh_core].[project_dimension]\nGO\nDROP TABLE [dwh_core].[developer_dimension]\nGO\nDROP TABLE [dwh_core].[jira_git_fact]\nGO\nDROP TABLE [dwh_staging].[project_dimension]\nGO\nDROP TABLE [dwh_staging].[developer_dimension]\nGO\nDROP TABLE [dwh_staging].[jira_git_fact]\nGO",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "kssqlpool23",
+						"poolName": "kssqlpool23"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/delete_views')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "delete_ddls"
+				},
+				"content": {
+					"query": "DROP VIEW [dwh_reporting].[AverageRevenuePerDeveloper]\nGO\nDROP VIEW [dwh_reporting].[TotalCommitsByDeveloper]\nGO\nDROP VIEW [dwh_reporting].[TotalStoryPointsByProject]\nGO\n\n",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "kssqlpool23",
+						"poolName": "kssqlpool23"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/ParametrizedProcessJiraGitData')]",
+			"type": "Microsoft.Synapse/workspaces/notebooks",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"description": "Notebook to process Jira dimension table",
+				"nbformat": 4,
+				"nbformat_minor": 2,
+				"bigDataPool": {
+					"referenceName": "kssparkpool",
+					"type": "BigDataPoolReference"
+				},
+				"sessionProperties": {
+					"driverMemory": "28g",
+					"driverCores": 4,
+					"executorMemory": "28g",
+					"executorCores": 4,
+					"numExecutors": 2,
+					"conf": {
+						"spark.dynamicAllocation.enabled": "false",
+						"spark.dynamicAllocation.minExecutors": "2",
+						"spark.dynamicAllocation.maxExecutors": "2",
+						"spark.autotune.trackingId": "1ad369f9-09ab-40d2-9476-703b793f8530"
+					}
+				},
+				"metadata": {
+					"saveOutput": true,
+					"enableDebugMode": false,
+					"kernelspec": {
+						"name": "synapse_pyspark",
+						"display_name": "Synapse PySpark"
+					},
+					"language_info": {
+						"name": "python"
+					},
+					"a365ComputeOptions": {
+						"id": "/subscriptions/10589681-5ffc-4c04-bc50-3f3b976aaea9/resourceGroups/temmie-rg/providers/Microsoft.Synapse/workspaces/ks-azure-synapse-ws/bigDataPools/kssparkpool",
+						"name": "kssparkpool",
+						"type": "Spark",
+						"endpoint": "https://ks-azure-synapse-ws.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/kssparkpool",
+						"auth": {
+							"type": "AAD",
+							"authResource": "https://dev.azuresynapse.net"
+						},
+						"sparkVersion": "3.3",
+						"nodeCount": 3,
+						"cores": 4,
+						"memory": 28
+					},
+					"sessionKeepAliveTimeout": 30
+				},
+				"cells": [
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"tags": [
+								"parameters"
+							]
+						},
+						"source": [
+							"ParSourceFolderName = \"\"\n",
+							"ParSourceFileName = \"\"\n",
+							"ParDestFolderName = \"\"\n",
+							"ParDestFileName = \"\""
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"import pandas as pd\n",
+							"from datetime import datetime"
+						],
+						"outputs": [],
+						"execution_count": 32
+					},
+					{
+						"cell_type": "markdown",
+						"metadata": {
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Create Path Variables"
+						]
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"def create_abfss_uri(folder_name, file_name,storage_account_name=\"ksazuresynapse\", container_name=\"mydatalake\"):\n",
+							"    return f\"abfss://{container_name}@{storage_account_name}.dfs.core.windows.net/{folder_name}/{file_name}\"\n",
+							"\n",
+							"\n",
+							"\n",
+							"source_folder_name = f\"{ParSourceFolderName}\"\n",
+							"source_file_name = f\"{ParSourceFileName}\"\n",
+							"destination_folder_name = f\"{ParDestFolderName}\"\n",
+							"destination_file_name = f\"{ParDestFileName}\""
+						],
+						"outputs": [],
+						"execution_count": 1
+					},
+					{
+						"cell_type": "markdown",
+						"metadata": {
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Preprocess Data"
+						]
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"source_path = create_abfss_uri(source_folder_name, source_file_name)\n",
+							"print(f\"Source Path: {source_path}\")\n",
+							"source_dataframe = pd.read_csv(source_path)\n",
+							"print(f\"Loaded data @ {source_path}\")\n",
+							"source_dataframe.head()"
+						],
+						"outputs": [],
+						"execution_count": 34
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"def process_timestamp(row):\n",
+							"    datetime_object = datetime.strptime(row, \"%Y-%m-%d %H:%M:%S.%f\")\n",
+							"    return datetime_object.strftime(\"%Y-%m-%dT%H:%M:%SZ\")\n",
+							"\n",
+							"# Make JiraGitKey Unique\n",
+							"source_dataframe.drop(columns=[\"JiraGitKey\"], inplace=True)\n",
+							"source_dataframe = source_dataframe.reset_index()\n",
+							"source_dataframe = source_dataframe.rename(columns={\"index\": \"JiraGitKey\"})\n",
+							"\n",
+							"# Process Commit Time\n",
+							"source_dataframe.CommitTime = source_dataframe.CommitTime.apply(process_timestamp)\n",
+							"\n",
+							"# Convert int64 to int32\n",
+							"for col in [\"JiraGitKey\", \"StoryPoint\", \"DeveloperKey\"]:\n",
+							"    source_dataframe[col] = source_dataframe[col].astype(\"int32\")\n",
+							"    \n",
+							"source_dataframe.head()"
+						],
+						"outputs": [],
+						"execution_count": 35
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"source_dataframe.info()"
+						],
+						"outputs": [],
+						"execution_count": 36
+					},
+					{
+						"cell_type": "markdown",
+						"metadata": {
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Save DataFrame"
+						]
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"destination_path = create_abfss_uri(destination_folder_name, destination_file_name)\n",
+							"source_dataframe.to_parquet(destination_path, index=False, compression=\"snappy\")\n",
+							"print(f\"Saved data @ {destination_path}\")"
+						],
+						"outputs": [],
+						"execution_count": 37
+					}
+				]
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/ProcessJiraGitData')]",
+			"type": "Microsoft.Synapse/workspaces/notebooks",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"description": "Notebook to process Jira dimension table",
+				"nbformat": 4,
+				"nbformat_minor": 2,
+				"bigDataPool": {
+					"referenceName": "kssparkpool",
+					"type": "BigDataPoolReference"
+				},
+				"sessionProperties": {
+					"driverMemory": "28g",
+					"driverCores": 4,
+					"executorMemory": "28g",
+					"executorCores": 4,
+					"numExecutors": 2,
+					"conf": {
+						"spark.dynamicAllocation.enabled": "false",
+						"spark.dynamicAllocation.minExecutors": "2",
+						"spark.dynamicAllocation.maxExecutors": "2",
+						"spark.autotune.trackingId": "7d66976f-0621-4a0e-97e5-2e4bc83b6230"
+					}
+				},
+				"metadata": {
+					"saveOutput": true,
+					"enableDebugMode": false,
+					"kernelspec": {
+						"name": "synapse_pyspark",
+						"display_name": "Synapse PySpark"
+					},
+					"language_info": {
+						"name": "python"
+					},
+					"a365ComputeOptions": {
+						"id": "/subscriptions/10589681-5ffc-4c04-bc50-3f3b976aaea9/resourceGroups/temmie-rg/providers/Microsoft.Synapse/workspaces/ks-azure-synapse-ws/bigDataPools/kssparkpool",
+						"name": "kssparkpool",
+						"type": "Spark",
+						"endpoint": "https://ks-azure-synapse-ws.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/kssparkpool",
+						"auth": {
+							"type": "AAD",
+							"authResource": "https://dev.azuresynapse.net"
+						},
+						"sparkVersion": "3.3",
+						"nodeCount": 3,
+						"cores": 4,
+						"memory": 28
+					},
+					"sessionKeepAliveTimeout": 30
+				},
+				"cells": [
+					{
+						"cell_type": "code",
+						"source": [
+							"import pandas as pd\n",
+							"from datetime import datetime"
+						],
+						"outputs": [],
+						"execution_count": 17
+					},
+					{
+						"cell_type": "markdown",
+						"metadata": {
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Create Path Variables"
+						]
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"ParSourceFolderName = \"bronze/jira_git_fact\"\n",
+							"ParSourceFileName = \"jira_git_commit.csv\"\n",
+							"ParDestFolderName = \"gold/jira_git_fact\"\n",
+							"ParDestFileName = \"jira_git_dimension.parquet\""
+						],
+						"outputs": [],
+						"execution_count": 18
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"def create_abfss_uri(folder_name, file_name,storage_account_name=\"ksazuresynapse\", container_name=\"mydatalake\"):\n",
+							"    return f\"abfss://{container_name}@{storage_account_name}.dfs.core.windows.net/{folder_name}/{file_name}\"\n",
+							"\n",
+							"\n",
+							"\n",
+							"source_folder_name = f\"{ParSourceFolderName}\"\n",
+							"source_file_name = f\"{ParSourceFileName}\"\n",
+							"destination_folder_name = f\"{ParDestFolderName}\"\n",
+							"destination_file_name = f\"{ParDestFileName}\""
+						],
+						"outputs": [],
+						"execution_count": 19
+					},
+					{
+						"cell_type": "markdown",
+						"metadata": {
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Preprocess Data"
+						]
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"source_path = create_abfss_uri(source_folder_name, source_file_name)\n",
+							"print(f\"Source Path: {source_path}\")\n",
+							"source_dataframe = pd.read_csv(source_path)\n",
+							"print(f\"Loaded data @ {source_path}\")\n",
+							"source_dataframe.head()"
+						],
+						"outputs": [],
+						"execution_count": 20
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"def process_timestamp(row):\n",
+							"    datetime_object = datetime.strptime(row, \"%Y-%m-%d %H:%M:%S.%f\")\n",
+							"    return datetime_object.strftime(\"%Y-%m-%dT%H:%M:%SZ\")\n",
+							"\n",
+							"# Make JiraGitKey Unique\n",
+							"source_dataframe.drop(columns=[\"JiraGitKey\"], inplace=True)\n",
+							"source_dataframe = source_dataframe.reset_index()\n",
+							"source_dataframe = source_dataframe.rename(columns={\"index\": \"JiraGitKey\"})\n",
+							"\n",
+							"# Process Commit Time\n",
+							"source_dataframe.CommitTime = source_dataframe.CommitTime.apply(process_timestamp)\n",
+							"\n",
+							"# Convert int64 to int32\n",
+							"for col in [\"JiraGitKey\", \"StoryPoint\", \"DeveloperKey\"]:\n",
+							"    source_dataframe[col] = source_dataframe[col].astype(\"int32\")\n",
+							"\n",
+							"source_dataframe.head()"
+						],
+						"outputs": [],
+						"execution_count": 21
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"source_dataframe.info()"
+						],
+						"outputs": [],
+						"execution_count": 22
+					},
+					{
+						"cell_type": "markdown",
+						"metadata": {
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Save DataFrame"
+						]
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"destination_path = create_abfss_uri(destination_folder_name, destination_file_name)\n",
+							"source_dataframe.to_parquet(destination_path, index=False, compression=\"snappy\")\n",
+							"print(f\"Saved data @ {destination_path}\")"
+						],
+						"outputs": [],
+						"execution_count": 23
+					}
+				]
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/kssparkpool')]",
+			"type": "Microsoft.Synapse/workspaces/bigDataPools",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"autoPause": {
+					"enabled": true,
+					"delayInMinutes": 15
+				},
+				"autoScale": {
+					"enabled": false,
+					"maxNodeCount": 10,
+					"minNodeCount": 3
+				},
+				"nodeCount": 3,
+				"nodeSize": "Small",
+				"nodeSizeFamily": "MemoryOptimized",
+				"sparkVersion": "3.3",
+				"isComputeIsolationEnabled": false,
+				"sessionLevelPackagesEnabled": false,
+				"annotations": []
+			},
+			"dependsOn": [],
+			"location": "westeurope"
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/kssqlpool23')]",
+			"type": "Microsoft.Synapse/workspaces/sqlPools",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"collation": "SQL_Latin1_General_CP1_CI_AS",
+				"maxSizeBytes": 263882790666240,
+				"annotations": []
+			},
+			"dependsOn": [],
+			"location": "westeurope"
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/default')]",
+			"type": "Microsoft.Synapse/workspaces/managedVirtualNetworks",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/default/synapse-ws-custstgacct--ks-azure-synapse-ws-ksazuresynapse')]",
+			"type": "Microsoft.Synapse/workspaces/managedVirtualNetworks/managedPrivateEndpoints",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"privateLinkResourceId": "/subscriptions/10589681-5ffc-4c04-bc50-3f3b976aaea9/resourceGroups/temmie-rg/providers/Microsoft.Storage/storageAccounts/ksazuresynapse",
+				"groupId": "dfs"
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/managedVirtualNetworks/default')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/default/synapse-ws-sql--ks-azure-synapse-ws')]",
+			"type": "Microsoft.Synapse/workspaces/managedVirtualNetworks/managedPrivateEndpoints",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"privateLinkResourceId": "/subscriptions/10589681-5ffc-4c04-bc50-3f3b976aaea9/resourceGroups/temmie-rg/providers/Microsoft.Synapse/workspaces/ks-azure-synapse-ws",
+				"groupId": "sql",
+				"fqdns": [
+					"ks-azure-synapse-ws.9fd29c97-3cfe-470c-992a-8b7a64096224.sql.azuresynapse.net"
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/managedVirtualNetworks/default')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/default/synapse-ws-sqlOnDemand--ks-azure-synapse-ws')]",
+			"type": "Microsoft.Synapse/workspaces/managedVirtualNetworks/managedPrivateEndpoints",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"privateLinkResourceId": "/subscriptions/10589681-5ffc-4c04-bc50-3f3b976aaea9/resourceGroups/temmie-rg/providers/Microsoft.Synapse/workspaces/ks-azure-synapse-ws",
+				"groupId": "sqlOnDemand",
+				"fqdns": [
+					"ks-azure-synapse-ws-ondemand.9fd29c97-3cfe-470c-992a-8b7a64096224.sql.azuresynapse.net"
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/managedVirtualNetworks/default')]"
+			]
+		}
+	]
+}
