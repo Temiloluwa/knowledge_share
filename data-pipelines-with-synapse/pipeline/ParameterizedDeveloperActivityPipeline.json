@@ -122,12 +122,40 @@
 							"type": "ParquetReadSettings"
 						}
 					},
+					"sink": {
+						"type": "SqlPoolSink",
+						"allowCopyCommand": true
+					},
 					"enableStaging": false
 				},
 				"inputs": [
 					{
 						"referenceName": "StagingParquet",
-						"type": "DatasetReference"
+						"type": "DatasetReference",
+						"parameters": {
+							"ParquetContainer": "mydatalake",
+							"ParquetFolder": {
+								"value": "@pipeline().parameters.ParDestFolderName",
+								"type": "Expression"
+							},
+							"ParquetFileName": {
+								"value": "@pipeline().parameters.ParDestFileName",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "StagingDB",
+						"type": "DatasetReference",
+						"parameters": {
+							"DbSchema": "dwh_staging",
+							"DbTable": {
+								"value": "@pipeline().parameters.ParStagingTableName",
+								"type": "Expression"
+							}
+						}
 					}
 				]
 			},
@@ -190,6 +218,10 @@
 			"ParCoreStoredProcedure": {
 				"type": "string",
 				"defaultValue": "dwh.load_core_jira_git"
+			},
+			"ParStagingTableName": {
+				"type": "string",
+				"defaultValue": "jira_git_fact"
 			}
 		},
 		"annotations": []
