@@ -21,19 +21,31 @@
 					},
 					"parameters": {
 						"ParSourceFolderName": {
-							"value": "",
+							"value": {
+								"value": "@pipeline().parameters.ParSourceFolderName",
+								"type": "Expression"
+							},
 							"type": "string"
 						},
 						"ParSourceFileName": {
-							"value": "",
+							"value": {
+								"value": "@pipeline().parameters.ParSourceFileName",
+								"type": "Expression"
+							},
 							"type": "string"
 						},
 						"ParDestFolderName": {
-							"value": "",
+							"value": {
+								"value": "@pipeline().parameters.ParDestFolderName",
+								"type": "Expression"
+							},
 							"type": "string"
 						},
 						"ParDestFileName": {
-							"value": "",
+							"value": {
+								"value": "@pipeline().parameters.ParDestFileName",
+								"type": "Expression"
+							},
 							"type": "string"
 						}
 					},
