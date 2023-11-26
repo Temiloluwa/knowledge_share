@@ -18,7 +18,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "2e7eb929-738a-42ef-acff-1edc9add1c3a"
+				"spark.autotune.trackingId": "062318a4-3115-4a00-9555-f29b8c321674"
 			}
 		},
 		"metadata": {
@@ -55,7 +55,7 @@
 					"import pandas as pd\n",
 					"from datetime import datetime"
 				],
-				"execution_count": 10
+				"execution_count": 17
 			},
 			{
 				"cell_type": "markdown",
@@ -89,7 +89,7 @@
 					"ParDestFolderName = \"gold/jira_git_fact\"\n",
 					"ParDestFileName = \"jira_git_dimension.parquet\""
 				],
-				"execution_count": 11
+				"execution_count": 18
 			},
 			{
 				"cell_type": "code",
@@ -115,7 +115,7 @@
 					"destination_folder_name = f\"{ParDestFolderName}\"\n",
 					"destination_file_name = f\"{ParDestFileName}\""
 				],
-				"execution_count": 12
+				"execution_count": 19
 			},
 			{
 				"cell_type": "markdown",
@@ -150,7 +150,7 @@
 					"print(f\"Loaded data @ {source_path}\")\n",
 					"source_dataframe.head()"
 				],
-				"execution_count": 13
+				"execution_count": 20
 			},
 			{
 				"cell_type": "code",
@@ -179,7 +179,7 @@
 					"source_dataframe.CommitTime = source_dataframe.CommitTime.apply(process_timestamp)\n",
 					"source_dataframe.head()"
 				],
-				"execution_count": 14
+				"execution_count": 21
 			},
 			{
 				"cell_type": "code",
@@ -197,7 +197,7 @@
 				"source": [
 					"source_dataframe.info()"
 				],
-				"execution_count": 15
+				"execution_count": 22
 			},
 			{
 				"cell_type": "markdown",
@@ -230,7 +230,7 @@
 					"source_dataframe.to_parquet(destination_path, index=False, compression=\"snappy\")\n",
 					"print(f\"Saved data @ {destination_path}\")"
 				],
-				"execution_count": 16
+				"execution_count": 23
 			}
 		]
 	}

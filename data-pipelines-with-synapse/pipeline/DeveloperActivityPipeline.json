@@ -79,7 +79,7 @@
 						"type": "ParquetSource",
 						"storeSettings": {
 							"type": "AzureBlobFSReadSettings",
-							"fileListPath": "mydatalake/gold/jira_git_fact/jira_git_dimension.parquet",
+							"recursive": true,
 							"enablePartitionDiscovery": false
 						},
 						"formatSettings": {
