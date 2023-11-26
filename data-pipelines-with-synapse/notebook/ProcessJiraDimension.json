@@ -18,7 +18,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "01777a79-2ab4-44f5-8573-b52ee3304bc1"
+				"spark.autotune.trackingId": "794a7e33-3667-4f01-b23a-a6cad7a2448a"
 			}
 		},
 		"metadata": {
@@ -126,7 +126,7 @@
 				},
 				"source": [
 					"source_path = create_abfss_uri(source_folder_name, source_file_name)\n",
-					"pd.read_csv(source_path)"
+					"source_dataframe = pd.read_csv(source_path)"
 				],
 				"execution_count": 5
 			},
