@@ -21,7 +21,14 @@
 			{
 				"name": "Copy Data to Staging Stables",
 				"type": "Copy",
-				"dependsOn": [],
+				"dependsOn": [
+					{
+						"activity": "Empty Staging Tables",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
 				"policy": {
 					"timeout": "0.12:00:00",
 					"retry": 0,
@@ -37,7 +44,14 @@
 			{
 				"name": "Load Core Tables",
 				"type": "SqlPoolStoredProcedure",
-				"dependsOn": [],
+				"dependsOn": [
+					{
+						"activity": "Copy Data to Staging Stables",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
 				"policy": {
 					"timeout": "0.12:00:00",
 					"retry": 0,
@@ -50,7 +64,14 @@
 			{
 				"name": "Empty Staging Tables",
 				"type": "SqlPoolStoredProcedure",
-				"dependsOn": [],
+				"dependsOn": [
+					{
+						"activity": "Transform JiraGitDimension",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
 				"policy": {
 					"timeout": "0.12:00:00",
 					"retry": 0,
