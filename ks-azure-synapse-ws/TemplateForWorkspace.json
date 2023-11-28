@@ -978,7 +978,7 @@
 					"name": "create_ddls"
 				},
 				"content": {
-					"query": "-- NUMBER OF STORY POINTS PER RPOJECT\n\nCREATE VIEW dwh_reporting.TotalStoryPointsByProject AS\nSELECT\n    pd.ProjectName,\n    SUM(jgf.StoryPoint) AS TotalStoryPoints\nFROM\n    dwh_core.jira_git_fact jgf\nJOIN\n    dwh_core.project_dimension pd ON jgf.ProjectName = pd.ProjectName\nGROUP BY\n    pd.ProjectName;\n\nGO\n\n-- AVERAGE REVENUE PER DEVELOPER\n\nCREATE VIEW dwh_reporting.AverageRevenuePerDeveloper AS\nSELECT\n    dd.DeveloperName,\n    AVG(pd.RevenueGenerated) AS AverageRevenue\nFROM\n    dwh_core.jira_git_fact jgf\nJOIN\n    dwh_core.developer_dimension dd ON jgf.DeveloperKey = dd.DeveloperKey\nJOIN\n    dwh_core.project_dimension pd ON jgf.ProjectName = pd.ProjectName\nGROUP BY\n    dd.DeveloperName;\n\nGO\n\n-- TOTAL COMMITS BY DEVELOPER\n\nCREATE VIEW dwh_reporting.TotalCommitsByDeveloper AS\nSELECT\n    dd.DeveloperName,\n    COUNT(jgf.JiraGitKey) AS TotalCommits\nFROM\n    dwh_core.jira_git_fact jgf\nJOIN\n    dwh_core.developer_dimension dd ON jgf.DeveloperKey = dd.DeveloperKey\nGROUP BY\n    dd.DeveloperName;\n\nGO",
+					"query": "-- NUMBER OF STORY POINTS PER RPOJECT\n\nCREATE VIEW dwh_reporting.TotalStoryPointsByProject AS\nSELECT\n    pd.ProjectName,\n    SUM(jgf.StoryPoints) AS TotalStoryPoints\nFROM\n    dwh_core.jira_git_fact jgf\nJOIN\n    dwh_core.project_dimension pd ON jgf.ProjectKey = pd.ProjectKey\nGROUP BY\n    pd.ProjectName;\nGO\n\n-- AVERAGE REVENUE PER DEVELOPER\n\nCREATE VIEW dwh_reporting.AverageRevenuePerDeveloper AS\nSELECT\n    dd.DeveloperName,\n    AVG(pd.RevenueGenerated) AS AverageRevenue\nFROM\n    dwh_core.jira_git_fact jgf\nJOIN\n    dwh_core.developer_dimension dd ON jgf.DeveloperKey = dd.DeveloperKey\nJOIN\n    dwh_core.project_dimension pd ON jgf.ProjectKey = pd.ProjectKey\nGROUP BY\n    dd.DeveloperName;\n\nGO\n\n-- TOTAL COMMITS BY DEVELOPER\n\nCREATE VIEW dwh_reporting.TotalCommitsByDeveloper AS\nSELECT\n    dd.DeveloperName,\n    COUNT(jgf.JiraGitKey) AS TotalCommits\nFROM\n    dwh_core.jira_git_fact jgf\nJOIN\n    dwh_core.developer_dimension dd ON jgf.DeveloperKey = dd.DeveloperKey\nGROUP BY\n    dd.DeveloperName;\n\nGO",
 					"metadata": {
 						"language": "sql"
 					},
@@ -1693,7 +1693,7 @@
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
 				"annotations": [],
-				"runtimeState": "Stopped",
+				"runtimeState": "Started",
 				"pipelines": [
 					{
 						"pipelineReference": {
@@ -1708,7 +1708,7 @@
 					"recurrence": {
 						"frequency": "Minute",
 						"interval": 10,
-						"startTime": "2023-11-28T13:51:00",
+						"startTime": "2023-11-28T13:59:00",
 						"timeZone": "W. Europe Standard Time"
 					}
 				}
