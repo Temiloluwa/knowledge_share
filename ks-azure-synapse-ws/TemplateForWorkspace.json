@@ -1675,7 +1675,7 @@
 				"type": "BlobEventsTrigger",
 				"typeProperties": {
 					"blobPathBeginsWith": "/mydatalake/blobs/bronze/jira_git_fact",
-					"blobPathEndsWith": "jira_fact.csv",
+					"blobPathEndsWith": "jira_git_fact.csv",
 					"ignoreEmptyBlobs": true,
 					"scope": "[parameters('TriggerDeveloperProductivity_properties_typeProperties_scope')]",
 					"events": [
