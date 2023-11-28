@@ -14,7 +14,7 @@
 		"type": "BlobEventsTrigger",
 		"typeProperties": {
 			"blobPathBeginsWith": "/mydatalake/blobs/bronze/jira_git_fact",
-			"blobPathEndsWith": "jira_fact.csv",
+			"blobPathEndsWith": "jira_git_fact.csv",
 			"ignoreEmptyBlobs": true,
 			"scope": "/subscriptions/10589681-5ffc-4c04-bc50-3f3b976aaea9/resourceGroups/temmie-rg/providers/Microsoft.Storage/storageAccounts/ksazuresynapse",
 			"events": [
