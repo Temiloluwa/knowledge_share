@@ -1686,6 +1686,36 @@
 			"dependsOn": [
 				"[concat(variables('workspaceId'), '/pipelines/ParameterizedDeveloperProductivityPipeline')]"
 			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/LoadCSVTrigger')]",
+			"type": "Microsoft.Synapse/workspaces/triggers",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Stopped",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "LoadCSVToDWH",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					}
+				],
+				"type": "ScheduleTrigger",
+				"typeProperties": {
+					"recurrence": {
+						"frequency": "Minute",
+						"interval": 10,
+						"startTime": "2023-11-28T13:51:00",
+						"timeZone": "W. Europe Standard Time"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/pipelines/LoadCSVToDWH')]"
+			]
 		}
 	]
 }
