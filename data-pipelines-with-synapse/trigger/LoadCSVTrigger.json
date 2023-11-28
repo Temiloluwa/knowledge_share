@@ -2,7 +2,7 @@
 	"name": "LoadCSVTrigger",
 	"properties": {
 		"annotations": [],
-		"runtimeState": "Stopped",
+		"runtimeState": "Started",
 		"pipelines": [
 			{
 				"pipelineReference": {
@@ -16,7 +16,7 @@
 			"recurrence": {
 				"frequency": "Minute",
 				"interval": 10,
-				"startTime": "2023-11-28T13:51:00",
+				"startTime": "2023-11-28T13:59:00",
 				"timeZone": "W. Europe Standard Time"
 			}
 		}
