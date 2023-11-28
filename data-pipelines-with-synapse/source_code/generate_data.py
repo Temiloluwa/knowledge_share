@@ -19,12 +19,15 @@ developers = [{'DeveloperKey': i + 1,
                'DeveloperName': fake.name(),
                'DeveloperRole': fake.job()} for i in range(20)]
 
+
 # Generate project data
 projects = [{'ProjectKey': i + 1,
              'ProjectName': fake.bs(),
              'ProjectStart': fake.date_between(start_date='-365d', end_date='today'),
              'ProjectEnd': fake.date_between(start_date='today', end_date='+365d'),
              'RevenueGenerated': fake.random_int(min=100000, max=500000)} for i in range(10)]
+
+projects_name_key_map = {ele["ProjectName"]: ele["ProjectKey"] for ele in projects}
 
 # Generate JiraGitDimension data
 jira_git_data = []
@@ -41,13 +44,13 @@ for i in range(num_data_points):
     # Ensure one-to-one relationship between JiraTicketKey and StoryPoint
     jira_git_data.append({
         'JiraGitKey': i + 1,
-        'JiraTicketKey': jira_ticket_key,
-        'StoryPoint': story_point,
+        'ProjectKey': projects_name_key_map[project['ProjectName']],
+        'DeveloperKey': developer['DeveloperKey'],
+        'StoryPoints': story_point,
+        'JiraTicket': jira_ticket_key,
         'GitHubRepo': project['ProjectName'],
         'CommitMessage': f"Initial commit for project {project['ProjectName']} by {developer['DeveloperName']}",
         'CommitTime': commit_time,
-        'ProjectName': project['ProjectName'],
-        'DeveloperKey': developer['DeveloperKey']
     })
 
     # Ensure one-to-many relationship between JiraTicketKey and CommitMessage
@@ -55,13 +58,13 @@ for i in range(num_data_points):
     commit_messages = [
         {
             'JiraGitKey': i + 1,
-            'JiraTicketKey': jira_ticket_key,
-            'StoryPoint': story_point,
+            'ProjectKey': projects_name_key_map[project['ProjectName']],
+            'DeveloperKey': developer['DeveloperKey'],
+            'StoryPoints': story_point,
+            'JiraTicket': jira_ticket_key,
             'GitHubRepo': project['ProjectName'],
             'CommitMessage': f"Commit {j+1} by {developer['DeveloperName']} on project {project['ProjectName']}",
             'CommitTime': fake.date_time_between_dates(commit_time, datetime.combine(project['ProjectEnd'], datetime.max.time())),
-            'ProjectName': project['ProjectName'],
-            'DeveloperKey': developer['DeveloperKey']
         } for j in range(num_commit_messages)
     ]
     jira_ticket_commit_messages.extend(commit_messages)
@@ -83,7 +86,7 @@ with open(os.path.join(output_folder, 'jira_git_dimension.csv'), 'w', newline=''
     writer.writerows(jira_git_data)
 
 # Write JiraGitCommit data to CSV in the bronze folder
-with open(os.path.join(output_folder, 'jira_git_commit.csv'), 'w', newline='') as file:
+with open(os.path.join(output_folder, 'jira_git_fact.csv'), 'w', newline='') as file:
     writer = csv.DictWriter(file, fieldnames=jira_ticket_commit_messages[0].keys())
     writer.writeheader()
     writer.writerows(jira_ticket_commit_messages)
