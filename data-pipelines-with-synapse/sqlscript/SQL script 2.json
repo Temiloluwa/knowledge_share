@@ -1,0 +1,17 @@
+{
+	"name": "SQL script 2",
+	"properties": {
+		"content": {
+			"query": "SELECT TOP (100) [DeveloperKey]\n,[DeveloperName]\n,[DeveloperRole]\n FROM [dwh_core].[developer_dimension]",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "kssqlpool23",
+				"poolName": "kssqlpool23"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}
