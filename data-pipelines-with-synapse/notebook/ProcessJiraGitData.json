@@ -18,7 +18,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "ef6b6d4f-3ef9-4d94-a000-8bdaa2299cab"
+				"spark.autotune.trackingId": "0b116856-30ee-40e9-9858-3fb1ec0e90b6"
 			}
 		},
 		"metadata": {
@@ -179,7 +179,7 @@
 					"source_dataframe.CommitTime = source_dataframe.CommitTime.apply(process_timestamp)\n",
 					"\n",
 					"# Convert int64 to int32\n",
-					"for col in [\"JiraGitKey\", \"StoryPoint\", \"DeveloperKey\"]:\n",
+					"for col in [\"JiraGitKey\", \"StoryPoints\", \"DeveloperKey\", \"ProjectKey\"]:\n",
 					"    source_dataframe[col] = source_dataframe[col].astype(\"int32\")\n",
 					"\n",
 					"source_dataframe.head()"
