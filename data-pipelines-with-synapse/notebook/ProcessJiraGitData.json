@@ -18,7 +18,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "7d66976f-0621-4a0e-97e5-2e4bc83b6230"
+				"spark.autotune.trackingId": "ef6b6d4f-3ef9-4d94-a000-8bdaa2299cab"
 			}
 		},
 		"metadata": {
@@ -85,7 +85,7 @@
 				},
 				"source": [
 					"ParSourceFolderName = \"bronze/jira_git_fact\"\n",
-					"ParSourceFileName = \"jira_git_commit.csv\"\n",
+					"ParSourceFileName = \"jira_git_fact.csv\"\n",
 					"ParDestFolderName = \"gold/jira_git_fact\"\n",
 					"ParDestFileName = \"jira_git_dimension.parquet\""
 				],
