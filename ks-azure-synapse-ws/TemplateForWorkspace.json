@@ -15,6 +15,10 @@
 		"ks-azure-synapse-ws-WorkspaceDefaultStorage_properties_typeProperties_url": {
 			"type": "string",
 			"defaultValue": "https://ksazuresynapse.dfs.core.windows.net"
+		},
+		"TriggerDeveloperProductivity_properties_typeProperties_scope": {
+			"type": "string",
+			"defaultValue": "/subscriptions/10589681-5ffc-4c04-bc50-3f3b976aaea9/resourceGroups/temmie-rg/providers/Microsoft.Storage/storageAccounts/ksazuresynapse"
 		}
 	},
 	"variables": {
@@ -22,16 +26,7 @@
 	},
 	"resources": [
 		{
-			"name": "[concat(parameters('workspaceName'), '/kssqlpool23')]",
-			"type": "Microsoft.Synapse/workspaces/sqlPools",
-			"apiVersion": "2019-06-01-preview",
-			"properties": {
-				"annotations": []
-			},
-			"dependsOn": []
-		},
-		{
-			"name": "[concat(parameters('workspaceName'), '/DeveloperActivityPipeline')]",
+			"name": "[concat(parameters('workspaceName'), '/DeveloperProductivityPipeline')]",
 			"type": "Microsoft.Synapse/workspaces/pipelines",
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
@@ -354,7 +349,7 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('workspaceName'), '/ParameterizedDeveloperActivityPipeline')]",
+			"name": "[concat(parameters('workspaceName'), '/ParameterizedDeveloperProductivityPipeline')]",
 			"type": "Microsoft.Synapse/workspaces/pipelines",
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
@@ -564,7 +559,7 @@
 					},
 					"ParSourceFileName": {
 						"type": "string",
-						"defaultValue": "jira_git_commit.csv"
+						"defaultValue": "jira_git_fact.csv"
 					},
 					"ParDestFolderName": {
 						"type": "string",
@@ -937,7 +932,7 @@
 					"name": "create_ddls"
 				},
 				"content": {
-					"query": "CREATE PROCEDURE dwh.empty_staging_tables\nAS BEGIN\n    DELETE FROM dwh_staging.jira_git_fact;\n    DELETE FROM dwh_staging.developer_dimension;\n    DELETE FROM dwh_staging.project_dimension;\nEND\nGO\n\n-- LOAD CORE DEVELOPER \n\nCREATE PROCEDURE dwh.load_core_developer\nAS\nBEGIN\n    SET NOCOUNT ON;\n    INSERT INTO dwh_core.developer_dimension (\n        [DeveloperKey],\n        [DeveloperName],\n        [DeveloperRole]\n    )\n    SELECT\n        [DeveloperKey],\n        [DeveloperName],\n        [DeveloperRole]\n    FROM\n        dwh_staging.developer_dimension;\nEND;\nGO\n\n-- LOAD DWH CORE PROJECT\nCREATE PROCEDURE dwh.load_core_project\nAS\nBEGIN\n    SET NOCOUNT ON;\n\n    INSERT INTO dwh_core.project_dimension (\n        [ProjectKey],\n        [ProjectName],\n        [ProjectStart],\n        [ProjectEnd],\n        [RevenueGenerated]\n    )\n    SELECT\n        [ProjectKey],\n        [ProjectName],\n        CAST([ProjectStart] AS DATETIME) AS [ProjectStart], \n        CAST([ProjectEnd] AS DATETIME) AS [ProjectEnd],    \n        [RevenueGenerated]\n    FROM\n        dwh_staging.project_dimension;\nEND;\nGO\n\n-- LOAD DWH JIRA GIT FACT\nCREATE PROCEDURE dwh.load_core_jira_git\nAS\nBEGIN\n    SET NOCOUNT ON;\n\n    -- Insert data into core table from staging table\n    INSERT INTO dwh_core.jira_git_fact (\n        [JiraGitKey],\n        [JiraTicketKey],\n        [DeveloperKey],\n        [StoryPoint],\n        [GitHubRepo],\n        [CommitMessage],\n        [CommitTime],\n        [ProjectName]\n    )\n    SELECT\n        [JiraGitKey],\n        [JiraTicketKey],\n        [DeveloperKey],\n        [StoryPoint],\n        [GitHubRepo],\n        [CommitMessage],\n        CAST([CommitTime] AS DATETIME), -- Cast the date column to datetime\n        [ProjectName]\n    FROM\n        dwh_staging.jira_git_fact;\nEND;\nGO\n",
+					"query": "CREATE PROCEDURE dwh.empty_staging_tables\nAS BEGIN\n    DELETE FROM dwh_staging.jira_git_fact;\n    DELETE FROM dwh_staging.developer_dimension;\n    DELETE FROM dwh_staging.project_dimension;\nEND\nGO\n\n-- LOAD CORE DEVELOPER \n\nCREATE PROCEDURE dwh.load_core_developer\nAS\nBEGIN\n    SET NOCOUNT ON;\n    INSERT INTO dwh_core.developer_dimension (\n        [DeveloperKey],\n        [DeveloperName],\n        [DeveloperRole]\n    )\n    SELECT\n        [DeveloperKey],\n        [DeveloperName],\n        [DeveloperRole]\n    FROM\n        dwh_staging.developer_dimension;\nEND;\nGO\n\n-- LOAD DWH CORE PROJECT\nCREATE PROCEDURE dwh.load_core_project\nAS\nBEGIN\n    SET NOCOUNT ON;\n\n    INSERT INTO dwh_core.project_dimension (\n        [ProjectKey],\n        [ProjectName],\n        [ProjectStart],\n        [ProjectEnd],\n        [RevenueGenerated]\n    )\n    SELECT\n        [ProjectKey],\n        [ProjectName],\n        CAST([ProjectStart] AS DATETIME) AS [ProjectStart], \n        CAST([ProjectEnd] AS DATETIME) AS [ProjectEnd],    \n        [RevenueGenerated]\n    FROM\n        dwh_staging.project_dimension;\nEND;\nGO\n\n-- LOAD DWH JIRA GIT FACT\nCREATE PROCEDURE dwh.load_core_jira_git\nAS\nBEGIN\n    SET NOCOUNT ON;\n\n    -- Insert data into core table from staging table\n    INSERT INTO dwh_core.jira_git_fact (\n        [JiraGitKey],\n        [ProjectKey],\n        [DeveloperKey],\n        [StoryPoints],\n        [JiraTicket],\n        [GitHubRepo],\n        [CommitMessage],\n        [CommitTime]\n    )\n    SELECT\n        [JiraGitKey],\n        [ProjectKey],\n        [DeveloperKey],\n        [StoryPoints],\n        [JiraTicket],\n        [GitHubRepo],\n        [CommitMessage],\n        CAST([CommitTime] AS DATETIME) -- Cast the date column to datetime\n    FROM\n        dwh_staging.jira_git_fact;\nEND;\nGO\n",
 					"metadata": {
 						"language": "sql"
 					},
@@ -960,7 +955,7 @@
 					"name": "create_ddls"
 				},
 				"content": {
-					"query": "CREATE TABLE dwh_core.project_dimension (\n    [ProjectKey] INT,\n    [ProjectName] NVARCHAR(255),\n    [ProjectStart] DATETIME,\n    [ProjectEnd] DATETIME,\n    [RevenueGenerated] INT\n);\nGO\n\n-- CREATE TABLE dwh_staging.project_dimension\n\nCREATE TABLE dwh_staging.project_dimension (\n    [ProjectKey] INT,\n    [ProjectName] NVARCHAR(255),\n    [ProjectStart] NVARCHAR(255),\n    [ProjectEnd] NVARCHAR(255),\n    [RevenueGenerated] INT\n);\nGO\n\n-- CREATE TABLE dwh_core.developer_dimension\n\nCREATE TABLE dwh_core.developer_dimension (\n    [DeveloperKey] INT,\n    [DeveloperName] NVARCHAR(255),\n    [DeveloperRole] NVARCHAR(255)\n);\nGO\n\n-- CREATE TABLE dwh_staging.developer_dimension\n\nCREATE TABLE dwh_staging.developer_dimension (\n    [DeveloperKey] INT,\n    [DeveloperName] NVARCHAR(255),\n    [DeveloperRole] NVARCHAR(255)\n);\nGO\n\n-- CREATE TABLE dwh_core.jira_git_fact\n\nCREATE TABLE dwh_core.jira_git_fact (\n    [JiraGitKey] INT,\n    [JiraTicketKey] NVARCHAR(100),\n    [DeveloperKey] INT,\n    [StoryPoint] INT,\n    [GitHubRepo] NVARCHAR(255),\n    [CommitMessage] NVARCHAR(1000),\n    [CommitTime] DATETIME,\n    [ProjectName] NVARCHAR(255)\n);\nGO\n\n-- CREATE TABLE dwh_staging.jira_git_fact\n\nCREATE TABLE dwh_staging.jira_git_fact (\n    [JiraGitKey] INT,\n    [JiraTicketKey] NVARCHAR(100),\n    [DeveloperKey] INT,\n    [StoryPoint] INT,\n    [GitHubRepo] NVARCHAR(255),\n    [CommitMessage] NVARCHAR(1000),\n    [CommitTime] NVARCHAR(255),\n    [ProjectName] NVARCHAR(255)\n);\nGO\n",
+					"query": "CREATE TABLE dwh_core.project_dimension (\n    [ProjectKey] INT,\n    [ProjectName] NVARCHAR(255),\n    [ProjectStart] DATETIME,\n    [ProjectEnd] DATETIME,\n    [RevenueGenerated] FLOAT\n);\nGO\n\n-- CREATE TABLE dwh_staging.project_dimension\n\nCREATE TABLE dwh_staging.project_dimension (\n    [ProjectKey] INT,\n    [ProjectName] NVARCHAR(255),\n    [ProjectStart] NVARCHAR(255),\n    [ProjectEnd] NVARCHAR(255),\n    [RevenueGenerated] FLOAT\n);\nGO\n\n-- CREATE TABLE dwh_core.developer_dimension\n\nCREATE TABLE dwh_core.developer_dimension (\n    [DeveloperKey] INT,\n    [DeveloperName] NVARCHAR(255),\n    [DeveloperRole] NVARCHAR(255)\n);\nGO\n\n-- CREATE TABLE dwh_staging.developer_dimension\n\nCREATE TABLE dwh_staging.developer_dimension (\n    [DeveloperKey] INT,\n    [DeveloperName] NVARCHAR(255),\n    [DeveloperRole] NVARCHAR(255)\n);\nGO\n\n-- CREATE TABLE dwh_core.jira_git_fact\n\nCREATE TABLE dwh_core.jira_git_fact (\n    [JiraGitKey] INT,\n    [ProjectKey] INT,\n    [DeveloperKey] INT,\n    [StoryPoints] INT,\n    [JiraTicket] NVARCHAR(255),\n    [GitHubRepo] NVARCHAR(255),\n    [CommitMessage] NVARCHAR(1000),\n    [CommitTime] DATETIME\n);\nGO\n\n-- CREATE TABLE dwh_staging.jira_git_fact\n\nCREATE TABLE dwh_staging.jira_git_fact (\n    [JiraGitKey] INT,\n    [ProjectKey] INT,\n    [DeveloperKey] INT,\n    [StoryPoints] INT,\n    [JiraTicket] NVARCHAR(255),\n    [GitHubRepo] NVARCHAR(255),\n    [CommitMessage] NVARCHAR(1000),\n    [CommitTime] NVARCHAR(255)\n);\nGO\n",
 					"metadata": {
 						"language": "sql"
 					},
@@ -1088,7 +1083,7 @@
 						"spark.dynamicAllocation.enabled": "false",
 						"spark.dynamicAllocation.minExecutors": "2",
 						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "1ad369f9-09ab-40d2-9476-703b793f8530"
+						"spark.autotune.trackingId": "4d7a055b-e79d-410a-92a5-2af7b7e54e14"
 					}
 				},
 				"metadata": {
@@ -1113,7 +1108,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 4,
-						"memory": 28
+						"memory": 28,
+						"automaticScaleJobs": false
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -1145,6 +1141,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"import pandas as pd\n",
 							"from datetime import datetime"
@@ -1255,7 +1252,7 @@
 							"source_dataframe.CommitTime = source_dataframe.CommitTime.apply(process_timestamp)\n",
 							"\n",
 							"# Convert int64 to int32\n",
-							"for col in [\"JiraGitKey\", \"StoryPoint\", \"DeveloperKey\"]:\n",
+							"for col in [\"JiraGitKey\", \"StoryPoints\", \"DeveloperKey\", \"ProjectKey\"]:\n",
 							"    source_dataframe[col] = source_dataframe[col].astype(\"int32\")\n",
 							"    \n",
 							"source_dataframe.head()"
@@ -1342,7 +1339,7 @@
 						"spark.dynamicAllocation.enabled": "false",
 						"spark.dynamicAllocation.minExecutors": "2",
 						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "7d66976f-0621-4a0e-97e5-2e4bc83b6230"
+						"spark.autotune.trackingId": "81ccddc8-0a28-4cf2-baf5-9aad98472c4d"
 					}
 				},
 				"metadata": {
@@ -1367,13 +1364,15 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 3,
 						"cores": 4,
-						"memory": 28
+						"memory": 28,
+						"automaticScaleJobs": false
 					},
 					"sessionKeepAliveTimeout": 30
 				},
 				"cells": [
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"import pandas as pd\n",
 							"from datetime import datetime"
@@ -1409,7 +1408,7 @@
 						},
 						"source": [
 							"ParSourceFolderName = \"bronze/jira_git_fact\"\n",
-							"ParSourceFileName = \"jira_git_commit.csv\"\n",
+							"ParSourceFileName = \"jira_git_fact.csv\"\n",
 							"ParDestFolderName = \"gold/jira_git_fact\"\n",
 							"ParDestFileName = \"jira_git_dimension.parquet\""
 						],
@@ -1506,7 +1505,7 @@
 							"source_dataframe.CommitTime = source_dataframe.CommitTime.apply(process_timestamp)\n",
 							"\n",
 							"# Convert int64 to int32\n",
-							"for col in [\"JiraGitKey\", \"StoryPoint\", \"DeveloperKey\"]:\n",
+							"for col in [\"JiraGitKey\", \"StoryPoints\", \"DeveloperKey\", \"ProjectKey\"]:\n",
 							"    source_dataframe[col] = source_dataframe[col].astype(\"int32\")\n",
 							"\n",
 							"source_dataframe.head()"
@@ -1655,6 +1654,37 @@
 			},
 			"dependsOn": [
 				"[concat(variables('workspaceId'), '/managedVirtualNetworks/default')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/TriggerDeveloperProductivity')]",
+			"type": "Microsoft.Synapse/workspaces/triggers",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Started",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "ParameterizedDeveloperProductivityPipeline",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					}
+				],
+				"type": "BlobEventsTrigger",
+				"typeProperties": {
+					"blobPathBeginsWith": "/mydatalake/blobs/bronze/jira_git_fact",
+					"blobPathEndsWith": "jira_fact.csv",
+					"ignoreEmptyBlobs": true,
+					"scope": "[parameters('TriggerDeveloperProductivity_properties_typeProperties_scope')]",
+					"events": [
+						"Microsoft.Storage.BlobCreated"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/pipelines/ParameterizedDeveloperProductivityPipeline')]"
 			]
 		}
 	]

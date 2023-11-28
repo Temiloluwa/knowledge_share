@@ -10,6 +10,9 @@
 		},
 		"ks-azure-synapse-ws-WorkspaceDefaultStorage_properties_typeProperties_url": {
 			"value": "https://ksazuresynapse.dfs.core.windows.net"
+		},
+		"TriggerDeveloperProductivity_properties_typeProperties_scope": {
+			"value": "/subscriptions/10589681-5ffc-4c04-bc50-3f3b976aaea9/resourceGroups/temmie-rg/providers/Microsoft.Storage/storageAccounts/ksazuresynapse"
 		}
 	}
 }
