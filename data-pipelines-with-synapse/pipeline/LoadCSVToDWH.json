@@ -129,11 +129,11 @@
 		"parameters": {
 			"CsvFolder": {
 				"type": "string",
-				"defaultValue": "bronze/developer_dim"
+				"defaultValue": "bronze/project_dim"
 			},
 			"CsvFileName": {
 				"type": "string",
-				"defaultValue": "developer_dimension.csv"
+				"defaultValue": "project_dimension.csv"
 			},
 			"StagingStoredProcedure": {
 				"type": "string",
@@ -141,11 +141,11 @@
 			},
 			"CoreStoredProcedure": {
 				"type": "string",
-				"defaultValue": "dwh.load_core_developer"
+				"defaultValue": "dwh.load_core_project"
 			},
 			"StagingTableName": {
 				"type": "string",
-				"defaultValue": "developer_dimension"
+				"defaultValue": "project_dimension"
 			}
 		},
 		"annotations": []
